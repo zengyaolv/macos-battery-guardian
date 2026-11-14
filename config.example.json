@@ -1,0 +1,37 @@
+{
+  "device_name": "MacBook",
+  "sound_enabled": false,
+  "high_threshold_percent": 70,
+  "high_only_on_ac": true,
+  "high_snooze_minutes": 15,
+  "low_threshold_percent": 30,
+  "low_only_on_battery": true,
+  "low_snooze_minutes": 5,
+  "critical_threshold_percent": 15,
+  "critical_unchanged_minutes": 10,
+  "critical_email_repeat_minutes": 30,
+  "quiet_mode": {
+    "schedules": [
+      {
+        "name": "Weekly Group Meeting (set enabled to true to activate)",
+        "enabled": false,
+        "days_of_week": [5],
+        "start": "14:00",
+        "end": "16:30",
+        "action": "pause"
+      }
+    ]
+  },
+  "email": {
+    "enabled": false,
+    "method": "mail_app",
+    "to_email": "you@example.com",
+    "from_email": "battery-guardian@example.com",
+    "ssh_socket": "~/.ssh/master.sock",
+    "ssh_host": "user@remote-host.example.com",
+    "smtp_host": "smtp.gmail.com",
+    "smtp_port": 465,
+    "smtp_user": "you@gmail.com",
+    "smtp_password": "your_app_password"
+  }
+}

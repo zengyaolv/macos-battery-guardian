@@ -1,0 +1,13 @@
+# Local private configuration & runtime state
+config.json
+state.json
+*.log
+
+# Compiled binaries & macOS app bundles
+BatteryFullscreenAlert
+BatteryFullscreenAlert.app/
+
+# macOS & Python artifacts
+.DS_Store
+__pycache__/
+*.pyc
