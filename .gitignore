@@ -1,7 +1,13 @@
 # Local private configuration & runtime state
 config.json
+config.*.json
+!config.example.json
 state.json
+.state.*.tmp
 *.log
+*.bak
+.env
+.env.*
 
 # Compiled binaries & macOS app bundles
 BatteryFullscreenAlert

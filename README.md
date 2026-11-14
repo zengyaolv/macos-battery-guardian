@@ -4,7 +4,12 @@ A lightweight, silent, native macOS battery health monitor that displays a full-
 
 ## Features
 
-- **100% Silent Full-Screen Alerts**: Built natively with Cocoa/AppKit (`NSWindow.Level.screenSaver`) across all connected displays and full-screen Spaces without making any sound—safe for meetings, libraries, and lectures.
+- **100% Silent Full-Screen Alerts**: Built natively with Cocoa/AppKit (`NSWindow.Level.screenSaver`) across all connected displays and full-screen Spaces without making any sound—safe for meetings, libraries, and lectures. Includes a **live 2×3 hardware telemetry grid** on every alert card.
+- **Zero-Risk Hardware Telemetry & Anti-Spoofing HUD (`./manage.sh health` / `./manage.sh hud`)**:
+  - Reads `IOKit` / `AppleSmartBattery` registers directly (zero network sockets, zero HTTP ports, zero third-party packages, zero `sudo`/root, zero hardware writes).
+  - Displays true battery health (`AppleRawMaxCapacity / DesignCapacity`), pack temperature, live watts & charge/discharge rate (`%/h`, instantaneous + 15m/60m sliding windows), multi-bank cell voltage/Qmax/impedance balance, and a **4-Gate TI Gas-Gauge Anti-Spoofing Audit** (`Calibration Timeline`, `Dual-Clock Integrity`, `Cell Balance`, `DataFlash/PF Flags`).
+  - Hardware serial numbers are **never** written to disk (`state.json` or logs) and are middle-masked (`XX****YY`) on screen.
+- **Hardened Local Security**: Enforces `0700` runtime directory and `0600` permissions on `config.json`, `state.json`, and log files; generates plists via `plistlib`; defends against SSH option injection, MIME header injection, and AppleScript string escaping; scopes process cleanup strictly to the current UID.
 - **Instant AC Plug / Unplug Auto-Dismiss**: Uses macOS `IOKit.ps` (`IOPSNotificationCreateRunLoopSource` + `0.5s` fallback check) so the full-screen alert disappears automatically the moment you unplug AC power (during `>70%` alerts) or plug in AC power (during `<30%` / `<15%` alerts). You can also dismiss manually with `Esc`, `Enter`, `Space`, or the on-screen button.
 - **Smart Thresholds (Configurable)**:
   - **High Battery (`> 70%` on AC)**: Reminds you to unplug your charger to slow battery wear.
@@ -33,9 +38,11 @@ A lightweight, silent, native macOS battery health monitor that displays a full-
    chmod +x manage.sh battery_monitor.py MeetingModeToggle.command
    ./manage.sh install
    ```
-4. **Check status or preview alerts**:
+4. **Check status, inspect hardware health, or open the on-screen HUD**:
    ```zsh
    ./manage.sh status
+   ./manage.sh health
+   ./manage.sh hud
    ./manage.sh test-high
    ./manage.sh test-low
    ./manage.sh test-critical
@@ -45,18 +52,20 @@ A lightweight, silent, native macOS battery health monitor that displays a full-
 
 | Command | Description |
 | --- | --- |
-| `./manage.sh install` | Compile `BatteryFullscreenAlert.app`, sync files to `~/Library/Application Support/BatteryGuardian`, and load the `launchd` agent (checks every 60s, starts on login). |
-| `./manage.sh status` | Show current battery status, alert mode, active thresholds, and `launchd` status. |
+| `./manage.sh install` | Compile `BatteryFullscreenAlert.app`, sync files to `~/Library/Application Support/BatteryGuardian` (`0700`/`0600`), generate the `launchd` plist safely via `plistlib`, and start the daemon (checks every 60s). |
+| `./manage.sh status` | Show current battery status, concise IOKit health/forensics summary, alert mode, active thresholds, and `launchd` status. |
+| `./manage.sh health` | Print the full read-only hardware telemetry, rate (`%/h`), cell balance, and 4-gate gas-gauge anti-spoofing audit to the terminal (`--screen` also opens the HUD). |
+| `./manage.sh hud` | Pop up the native live on-screen HUD overlay across all connected displays (0-risk read-only IOKit, refreshes every 2s; close with `Esc`/`Enter`/`Space`). |
 | `./manage.sh pause [minutes]` | Pause fullscreen popups for `N` minutes (default `120`; `<15%` critical emails remain active). |
 | `./manage.sh unmute` | Resume silent fullscreen alerts immediately. |
-| `./manage.sh set-email <addr>` | Update `email.to_email` in both local and runtime `config.json`. |
+| `./manage.sh set-email <addr>` | Safely validate and update `email.to_email` in both local and runtime `config.json` (`0600`). |
 | `./manage.sh test-high` | Preview the `>70%` silent fullscreen alert (auto-closes if you plug/unplug AC or press `Esc`). |
 | `./manage.sh test-low` | Preview the `<30%` silent fullscreen alert. |
 | `./manage.sh test-critical` | Preview the `<15%` critical fullscreen alert. |
 | `./manage.sh test-email` | Send a test email using the configured backend. |
 | `./manage.sh uninstall` | Unload and remove the background `launchd` agent. |
 
-You can also double-click `MeetingModeToggle.command` in Finder to toggle Meeting Mode via a native macOS dialog.
+You can also double-click `MeetingModeToggle.command` in Finder to open the HUD or toggle Meeting Mode via a native macOS dialog.
 
 ## Configuration (`config.example.json`)
 
