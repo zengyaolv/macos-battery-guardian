@@ -37,9 +37,10 @@
 
   <!-- Connector lines from gauge down to cards -->
   <line x1="143" y1="148" x2="143" y2="188" stroke="#64748B" stroke-width="1.8" marker-end="url(#arrowCyan)"/>
-  <line x1="294" y1="148" x2="365" y2="188" stroke="#64748B" stroke-width="1.8" marker-end="url(#arrowCyan)"/>
-  <line x1="566" y1="148" x2="585" y2="188" stroke="#64748B" stroke-width="1.8" marker-end="url(#arrowCyan)"/>
-  <line x1="907" y1="148" x2="965" y2="188" stroke="#64748B" stroke-width="1.8" marker-end="url(#arrowCyan)"/>
+  <line x1="280" y1="148" x2="359" y2="188" stroke="#64748B" stroke-width="1.8" marker-end="url(#arrowCyan)"/>
+  <line x1="330" y1="148" x2="585" y2="188" stroke="#F59E0B" stroke-width="1.8" marker-end="url(#arrowAmber)"/>
+  <line x1="566" y1="148" x2="793" y2="188" stroke="#64748B" stroke-width="1.8" marker-end="url(#arrowCyan)"/>
+  <line x1="907" y1="148" x2="985" y2="188" stroke="#64748B" stroke-width="1.8" marker-end="url(#arrowCyan)"/>
 
   <!-- Card 1: Critical (<15% Unplugged >= 10m) -->
   <rect x="44" y="194" width="198" height="292" rx="14" fill="#2A0B10" stroke="#EF4444" stroke-width="2"/>

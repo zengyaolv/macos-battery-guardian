@@ -56,6 +56,7 @@ A lightweight, silent, native macOS battery health monitor that displays full-sc
    ./manage.sh hud
    ./manage.sh test-high
    ./manage.sh test-low
+   ./manage.sh test-upgrade
    ./manage.sh test-critical
    ```
 
