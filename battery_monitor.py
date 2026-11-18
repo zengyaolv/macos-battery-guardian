@@ -113,6 +113,7 @@ def load_config() -> dict:
         "low_only_on_battery": True,
         "low_snooze_minutes": 5,
         "low_on_ac_upgrade_charger": True,
+        "low_on_ac_policy": "smart",
         "low_on_ac_snooze_minutes": 5,
         "low_on_ac_min_battery_watts": None,
         "low_on_ac_min_adapter_watts": None,
@@ -167,6 +168,8 @@ def load_state() -> dict:
         "pause_until_ts": 0.0,
         "active_alert_mode": None,
         "history_samples": [],
+        "last_unplugged_drain_pct_h": None,
+        "last_unplugged_drain_ts": 0.0,
     }
     if not STATE_PATH.exists():
         return default_state
@@ -373,6 +376,18 @@ def read_smart_battery_telemetry() -> Optional[Dict[str, Any]]:
     if amperage_ma is not None and denom_mah and denom_mah > 0:
         inst_rate_pct_h = round((float(amperage_ma) / float(denom_mah)) * 100.0, 2)
 
+    pack_wh: Optional[float] = None
+    if denom_mah and denom_mah > 0 and voltage_mv and voltage_mv > 0:
+        pack_wh = (float(denom_mah) / 1000.0) * (float(voltage_mv) / 1000.0)
+
+    drain_equiv_pct_h: Optional[float] = None
+    if system_load_w is not None and pack_wh and pack_wh > 0:
+        drain_equiv_pct_h = round((float(system_load_w) / pack_wh) * 100.0, 2)
+
+    wall_in_equiv_pct_h: Optional[float] = None
+    if wall_in_w is not None and pack_wh and pack_wh > 0:
+        wall_in_equiv_pct_h = round((float(wall_in_w) / pack_wh) * 100.0, 2)
+
     lifetime = pack_bdata.get("LifetimeData") if isinstance(pack_bdata.get("LifetimeData"), dict) else {}
     if not lifetime and isinstance(root_bdata.get("LifetimeData"), dict):
         lifetime = root_bdata["LifetimeData"]
@@ -566,6 +581,9 @@ def read_smart_battery_telemetry() -> Optional[Dict[str, Any]]:
         "adapter_current_a": round(float(adapter_ma) / 1000.0, 2) if adapter_ma is not None else None,
         "adapter_desc": adapter_desc,
         "inst_rate_pct_h": inst_rate_pct_h,
+        "pack_wh": round(pack_wh, 2) if pack_wh is not None else None,
+        "drain_equiv_pct_h": drain_equiv_pct_h,
+        "wall_in_equiv_pct_h": wall_in_equiv_pct_h,
         "temp_c": temp_c,
         "virtual_temp_c": virtual_temp_c,
         "flash_writes": flash_writes,
@@ -670,12 +688,41 @@ def record_and_compute_rates(
 
     r15 = _window_rate(900.0)
     r60 = _window_rate(3600.0)
+
+    # Track recent unplugged average drain rate (positive %/h magnitude) from battery-only intervals
+    unplugged_drain_pct_h: Optional[float] = None
+    if not on_ac and telemetry and telemetry.get("drain_equiv_pct_h") is not None:
+        unplugged_drain_pct_h = round(abs(float(telemetry["drain_equiv_pct_h"])), 2)
+    else:
+        batt_dt_total = 0.0
+        batt_dsoc_total = 0.0
+        prev_row: Optional[List[Any]] = None
+        for row in eval_samples:
+            if prev_row is not None and prev_row[2] == 0 and row[2] == 0:
+                dt_pair = row[0] - prev_row[0]
+                if 0.0 < dt_pair <= 600.0:
+                    batt_dt_total += dt_pair
+                    batt_dsoc_total += max(0.0, prev_row[1] - row[1])
+            prev_row = row
+        if batt_dt_total >= 120.0:
+            unplugged_drain_pct_h = round((batt_dsoc_total / (batt_dt_total / 3600.0)), 2)
+
+    if unplugged_drain_pct_h is not None:
+        if append:
+            state["last_unplugged_drain_pct_h"] = unplugged_drain_pct_h
+            state["last_unplugged_drain_ts"] = round(now, 1)
+    else:
+        saved_ts = float(state.get("last_unplugged_drain_ts") or 0.0)
+        if state.get("last_unplugged_drain_pct_h") is not None and (now - saved_ts) <= 21600.0:
+            unplugged_drain_pct_h = float(state["last_unplugged_drain_pct_h"])
+
     return {
         "rate_15m_pct_h": r15["rate"],
         "span_15m_min": r15["span_min"],
         "rate_60m_pct_h": r60["rate"],
         "span_60m_min": r60["span_min"],
         "sample_count": len(segment),
+        "unplugged_drain_pct_h": unplugged_drain_pct_h,
     }
 
 
@@ -728,6 +775,7 @@ def trigger_fullscreen_alert(
     device_name: str = "MacBook",
     dismiss_policy: str = "auto",
     recovery_percent: Optional[int] = None,
+    policy_hint: str = "",
 ) -> None:
     """Launch the native Swift silent full-screen alert or HUD via macOS LaunchServices (open -a)."""
     safe_device = sanitize_header_token(device_name) or "MacBook"
@@ -753,6 +801,7 @@ def trigger_fullscreen_alert(
             str(STATE_PATH),
             dismiss_policy,
             recovery_arg,
+            policy_hint,
         ]
         res = subprocess.run(cmd, capture_output=True, text=True)
         if res.returncode == 0:
@@ -761,7 +810,7 @@ def trigger_fullscreen_alert(
 
     if ALERT_BIN.exists():
         subprocess.Popen(
-            [str(ALERT_BIN), mode, str(percent), message, safe_device, str(STATE_PATH), dismiss_policy, recovery_arg]
+            [str(ALERT_BIN), mode, str(percent), message, safe_device, str(STATE_PATH), dismiss_policy, recovery_arg, policy_hint]
         )
         return
 
@@ -948,30 +997,145 @@ def send_emergency_email(cfg: dict, batt: dict, duration_min: float, is_test: bo
     return False
 
 
+def _fmt_num(val: Any, suffix: str = "", digits: int = 1, signed: bool = False) -> str:
+    if val is None:
+        return "N/A"
+    if isinstance(val, int) and digits == 0:
+        return (f"{val:+d}" if signed else f"{val}") + suffix
+    fval = float(val)
+    fmt = f"{{:{'+' if signed else ''}.{digits}f}}{suffix}"
+    return fmt.format(fval)
+
+
+def evaluate_charger_adequacy(
+    cfg: dict,
+    telemetry: Optional[Dict[str, Any]],
+    rates: Optional[Dict[str, Any]] = None,
+) -> Dict[str, Any]:
+    """
+    Compare live/recent charging rate against system consumption rate ("charge vs drain").
+    Policies:
+      - "smart" (default): flags net battery drain (<= 0 W / <= 0 mA / <= 0%/h over >=5m) OR
+        net charge rate slower than system drain while under 15 W net headroom.
+      - "deficit_only": flags strictly when battery experiences net drain / non-positive charge.
+      - "always": always flags whenever connected below low_threshold_percent.
+    """
+    policy = str(cfg.get("low_on_ac_policy") or "smart").strip().lower()
+    if policy not in ("smart", "deficit_only", "always"):
+        policy = "smart"
+
+    sys_load_w = telemetry.get("system_load_w") if telemetry else None
+    batt_power_w = telemetry.get("battery_power_w") if telemetry else None
+    inst_rate = telemetry.get("inst_rate_pct_h") if telemetry else None
+    adapter_w = telemetry.get("adapter_watts") if telemetry else None
+    amperage_ma = telemetry.get("amperage_ma") if telemetry else None
+
+    r15 = rates.get("rate_15m_pct_h") if rates else None
+    span15 = rates.get("span_15m_min") if rates else None
+    unplugged_drain = rates.get("unplugged_drain_pct_h") if rates else None
+
+    min_batt_w = cfg.get("low_on_ac_min_battery_watts")
+    if min_batt_w is not None and batt_power_w is not None and float(batt_power_w) >= float(min_batt_w):
+        return {
+            "insufficient": False,
+            "policy": policy,
+            "code": "sufficient_override",
+            "reason": f"Net battery power {float(batt_power_w):+.1f} W >= configured {float(min_batt_w):.1f} W",
+        }
+
+    min_adapter_w = cfg.get("low_on_ac_min_adapter_watts")
+    if min_adapter_w is not None and adapter_w is not None and float(adapter_w) >= float(min_adapter_w):
+        return {
+            "insufficient": False,
+            "policy": policy,
+            "code": "sufficient_adapter_override",
+            "reason": f"Adapter {adapter_w} W >= configured {float(min_adapter_w):.0f} W",
+        }
+
+    if policy == "always":
+        return {
+            "insufficient": True,
+            "policy": policy,
+            "code": "always_below_threshold",
+            "reason": "Policy=always below low threshold on AC",
+        }
+
+    if batt_power_w is not None and float(batt_power_w) <= 0.0:
+        return {
+            "insufficient": True,
+            "policy": policy,
+            "code": "net_drain",
+            "reason": f"Net drain on AC ({float(batt_power_w):+.1f} W <= 0 W; ChgIn <= SysDrain)",
+        }
+    if amperage_ma is not None and int(amperage_ma) <= 0:
+        return {
+            "insufficient": True,
+            "policy": policy,
+            "code": "net_drain_current",
+            "reason": f"Non-positive charge current on AC ({int(amperage_ma):+d} mA <= 0 mA)",
+        }
+    if r15 is not None and span15 is not None and float(span15) >= 5.0 and float(r15) <= 0.0:
+        return {
+            "insufficient": True,
+            "policy": policy,
+            "code": "sustained_15m_deficit",
+            "reason": f"Sustained {float(r15):+.1f}%/h trend over {float(span15):.0f} min on AC",
+        }
+
+    if policy == "deficit_only":
+        return {
+            "insufficient": False,
+            "policy": policy,
+            "code": "positive_charge",
+            "reason": f"Net charging positive ({_fmt_num(batt_power_w, ' W', 1, signed=True)})",
+        }
+
+    if batt_power_w is not None and sys_load_w is not None:
+        bw = float(batt_power_w)
+        sw = float(sys_load_w)
+        if bw < sw and bw < 15.0:
+            return {
+                "insufficient": True,
+                "policy": policy,
+                "code": "slower_than_sys_load",
+                "reason": f"Net charge {bw:+.1f} W < system consumption {sw:.1f} W",
+            }
+
+    if (
+        inst_rate is not None
+        and unplugged_drain is not None
+        and float(inst_rate) < float(unplugged_drain)
+        and (batt_power_w is None or float(batt_power_w) < 15.0)
+    ):
+        return {
+            "insufficient": True,
+            "policy": policy,
+            "code": "slower_than_unplugged_drain",
+            "reason": f"Charge rate {float(inst_rate):+.1f}%/h < recent drain {float(unplugged_drain):.1f}%/h",
+        }
+
+    return {
+        "insufficient": False,
+        "policy": policy,
+        "code": "sufficient_charging",
+        "reason": f"Charging exceeds consumption ({_fmt_num(batt_power_w, ' W', 1, signed=True)}, {_fmt_num(inst_rate, '%/h', 1, signed=True)})",
+    }
+
+
 def should_prompt_charger_upgrade(
     cfg: dict,
     pct: int,
     on_ac: bool,
     telemetry: Optional[Dict[str, Any]],
+    rates: Optional[Dict[str, Any]] = None,
 ) -> bool:
-    """Return True when battery is below low_threshold_percent while connected to AC."""
+    """Return True when battery < low_threshold_percent on AC and charging fails the configured adequacy policy."""
     if not bool(cfg.get("low_on_ac_upgrade_charger", True)):
         return False
     low_th = int(cfg.get("low_threshold_percent", 30))
     if not (pct < low_th and on_ac):
         return False
-
-    min_batt_w = cfg.get("low_on_ac_min_battery_watts")
-    if min_batt_w is not None and telemetry and telemetry.get("battery_power_w") is not None:
-        if float(telemetry["battery_power_w"]) >= float(min_batt_w):
-            return False
-
-    min_adapter_w = cfg.get("low_on_ac_min_adapter_watts")
-    if min_adapter_w is not None and telemetry and telemetry.get("adapter_watts") is not None:
-        if float(telemetry["adapter_watts"]) >= float(min_adapter_w):
-            return False
-
-    return True
+    return bool(evaluate_charger_adequacy(cfg, telemetry, rates)["insufficient"])
 
 
 def format_upgrade_charger_message(
@@ -980,29 +1144,51 @@ def format_upgrade_charger_message(
     low_th: int,
     crit_th: int,
     telemetry: Optional[Dict[str, Any]],
+    rates: Optional[Dict[str, Any]] = None,
+    adequacy: Optional[Dict[str, Any]] = None,
 ) -> str:
-    """Build a telemetry-rich prompt recommending a higher-wattage charger below low_threshold_percent."""
-    prefix = ""
-    if pct < crit_th:
-        prefix = f"CRITICAL (< {crit_th}%) on AC! "
-    if telemetry and telemetry.get("battery_power_w") is not None and float(telemetry["battery_power_w"]) <= 0.0:
-        prefix += "Net battery drain detected even with AC connected! "
+    """Build a charge-vs-drain prompt recommending a higher-wattage charger below low_threshold_percent."""
+    prefix = f"CRITICAL (< {crit_th}%) on AC! " if pct < crit_th else ""
+    if adequacy and adequacy.get("code") in ("net_drain", "net_drain_current", "sustained_15m_deficit"):
+        prefix += "Charging <= Consumption (Net Battery Drain)! "
+    elif telemetry and telemetry.get("battery_power_w") is not None and float(telemetry["battery_power_w"]) <= 0.0:
+        prefix += "Charging <= Consumption (Net Battery Drain)! "
+    else:
+        prefix += "Charge Rate < Consumption Rate! "
 
     details: List[str] = []
     if telemetry:
+        bpw = telemetry.get("battery_power_w")
+        rate = telemetry.get("inst_rate_pct_h")
+        if bpw is not None or rate is not None:
+            chg_bits = []
+            if bpw is not None:
+                chg_bits.append(f"{float(bpw):+.1f} W")
+            if rate is not None:
+                chg_bits.append(f"{float(rate):+.1f}%/h")
+            details.append("Chg " + " / ".join(chg_bits))
+
+        slw = telemetry.get("system_load_w")
+        deq = telemetry.get("drain_equiv_pct_h")
+        if slw is not None or deq is not None:
+            dr_bits = []
+            if slw is not None:
+                dr_bits.append(f"{float(slw):.1f} W")
+            if deq is not None:
+                dr_bits.append(f"{float(deq):.1f}%/h")
+            details.append("Drain " + " / ".join(dr_bits))
+
         adp_w = telemetry.get("adapter_watts")
         if adp_w is not None and adp_w > 0:
             details.append(f"Adapter {adp_w} W")
-        bpw = telemetry.get("battery_power_w")
-        if bpw is not None:
-            details.append(f"Net Battery {bpw:+.1f} W")
-        rate = telemetry.get("inst_rate_pct_h")
-        if rate is not None:
-            details.append(f"{rate:+.1f}%/h")
-    tel_str = f" ({', '.join(details)})" if details else ""
+
+    if rates and rates.get("unplugged_drain_pct_h") is not None:
+        details.append(f"HistDrain {float(rates['unplugged_drain_pct_h']):.1f}%/h")
+
+    tel_str = f" ({'; '.join(details)})" if details else ""
     return (
-        f"[{device_name}] {prefix}Battery is at {pct}% (< {low_th}%) while connected to AC{tel_str}. "
-        f"Switch to a higher-wattage charger to charge faster above {low_th}%."
+        f"[{device_name}] {prefix}Battery at {pct}% (< {low_th}%) on AC{tel_str}. "
+        f"Switch to a higher-wattage USB-C PD charger."
     )
 
 
@@ -1018,7 +1204,7 @@ def run_check() -> None:
     now = time.time()
 
     telemetry = read_smart_battery_telemetry()
-    record_and_compute_rates(state, telemetry, on_ac, pct, append=True)
+    rates = record_and_compute_rates(state, telemetry, on_ac, pct, append=True)
 
     high_th = int(cfg.get("high_threshold_percent", 70))
     low_th = int(cfg.get("low_threshold_percent", 30))
@@ -1111,11 +1297,20 @@ def run_check() -> None:
             dismiss_active_alert()
             state["active_alert_mode"] = None
 
-    # --- 4. Check Low Battery on AC (< low_threshold_percent while plugged in -> Higher-Wattage Charger Prompt) ---
-    upgrade_cond = (not low_cond) and should_prompt_charger_upgrade(cfg, pct, on_ac, telemetry)
+    # --- 4. Check Low Battery on AC (< low_threshold_percent & Charge < Consumption -> Higher-Wattage Charger) ---
+    adequacy = evaluate_charger_adequacy(cfg, telemetry, rates)
+    upgrade_cond = (
+        (not low_cond)
+        and bool(cfg.get("low_on_ac_upgrade_charger", True))
+        and (pct < low_th)
+        and on_ac
+        and bool(adequacy["insufficient"])
+    )
     if upgrade_cond:
         if not quiet["paused"] and (now - state.get("last_upgrade_alert_ts", 0.0) >= upgrade_snooze_sec):
-            upgrade_msg = format_upgrade_charger_message(device_name, pct, low_th, crit_th, telemetry)
+            upgrade_msg = format_upgrade_charger_message(
+                device_name, pct, low_th, crit_th, telemetry, rates=rates, adequacy=adequacy
+            )
             trigger_fullscreen_alert(
                 "upgrade_charger",
                 pct,
@@ -1123,29 +1318,23 @@ def run_check() -> None:
                 device_name,
                 dismiss_policy="auto",
                 recovery_percent=low_th,
+                policy_hint=str(adequacy["policy"]),
             )
             state["last_upgrade_alert_ts"] = now
             state["active_alert_mode"] = "upgrade_charger"
     else:
         state["last_upgrade_alert_ts"] = 0.0
         if state.get("active_alert_mode") == "upgrade_charger":
-            log(f"[{device_name}] Low-on-AC charger upgrade condition cleared (pct={pct}%, on_ac={on_ac}); closing active alert.")
+            log(
+                f"[{device_name}] Low-on-AC charger upgrade condition cleared "
+                f"(pct={pct}%, on_ac={on_ac}, reason={adequacy['code']}); closing active alert."
+            )
             dismiss_active_alert()
             state["active_alert_mode"] = None
 
     state["last_percent"] = pct
     state["last_on_ac"] = on_ac
     save_state(state)
-
-
-def _fmt_num(val: Any, suffix: str = "", digits: int = 1, signed: bool = False) -> str:
-    if val is None:
-        return "N/A"
-    if isinstance(val, int) and digits == 0:
-        return (f"{val:+d}" if signed else f"{val}") + suffix
-    fval = float(val)
-    fmt = f"{{:{'+' if signed else ''}.{digits}f}}{suffix}"
-    return fmt.format(fval)
 
 
 def show_status() -> None:
@@ -1173,12 +1362,18 @@ def show_status() -> None:
         cyc_str = f"{cyc} / {dcyc}" if cyc is not None else "N/A"
         temp_str = _fmt_num(telemetry.get("temp_c"), " C", 1)
         pwr_str = _fmt_num(telemetry.get("battery_power_w"), " W", 1, signed=True)
+        sys_str = _fmt_num(telemetry.get("system_load_w"), " W", 1)
         rate_str = _fmt_num(telemetry.get("inst_rate_pct_h"), "%/h", 1, signed=True)
+        drain_str = _fmt_num(telemetry.get("drain_equiv_pct_h"), "%/h", 1)
         r15_str = _fmt_num(rates.get("rate_15m_pct_h"), "%/h", 1, signed=True)
+        adequacy = evaluate_charger_adequacy(cfg, telemetry, rates)
         print("\n=== Hardware Health & Forensics (0-Risk IOKit) ===")
         print(f"  True Health     : {health_str} ({cap_str})")
         print(f"  Cycles & Gauge  : {cyc_str} cycles ({telemetry.get('gauge_model')}, Serial {telemetry.get('masked_serial')})")
-        print(f"  Live Power/Temp : {pwr_str} (Inst {rate_str}, 15m {r15_str}) | Temp {temp_str}")
+        print(f"  Charge vs Drain : Net {pwr_str} ({rate_str}, 15m {r15_str}) vs SysDrain {sys_str} ({drain_str}) | Temp {temp_str}")
+        if batt["on_ac"]:
+            chg_verdict = "UPGRADE RECOMMENDED (<30% trigger)" if adequacy["insufficient"] else "SUFFICIENT"
+            print(f"  Charger Check   : [{chg_verdict}] {adequacy['reason']}")
         print(f"  Forensics Audit : {telemetry.get('forensics_verdict')} (run './manage.sh health' or './manage.sh hud')")
 
     print("\n=== Fullscreen Alert Mode (Silent) ===")
@@ -1194,7 +1389,7 @@ def show_status() -> None:
     )
     print(
         f"  Low on AC       : < {cfg['low_threshold_percent']}% on AC -> Higher-Wattage Charger Alert "
-        f"(enabled={cfg.get('low_on_ac_upgrade_charger', True)}, cooldown={cfg.get('low_on_ac_snooze_minutes', 5)} min)"
+        f"(enabled={cfg.get('low_on_ac_upgrade_charger', True)}, policy={cfg.get('low_on_ac_policy', 'smart')}, cooldown={cfg.get('low_on_ac_snooze_minutes', 5)} min)"
     )
     print(
         f"  Critical Email  : < {cfg['critical_threshold_percent']}% unplugged for "
@@ -1248,11 +1443,20 @@ def show_health() -> None:
         f"| Adapter: {t.get('adapter_watts') or 0} W ({t.get('adapter_desc') or 'disconnected'})"
     )
     print(
-        f"  Charge Rate     : Instant {_fmt_num(t.get('inst_rate_pct_h'), '%/h', 1, signed=True)} "
+        f"  Charge vs Drain : ChgIn {_fmt_num(t.get('wall_in_w'), ' W', 2)} ({_fmt_num(t.get('wall_in_equiv_pct_h'), '%/h', 1)}) "
+        f"vs SysDrain {_fmt_num(t.get('system_load_w'), ' W', 2)} ({_fmt_num(t.get('drain_equiv_pct_h'), '%/h', 1)} equiv; "
+        f"Unplugged Avg {_fmt_num(rates.get('unplugged_drain_pct_h'), '%/h', 1)})"
+    )
+    print(
+        f"  Net Batt Rate   : Instant {_fmt_num(t.get('inst_rate_pct_h'), '%/h', 1, signed=True)} "
         f"| 15m Avg {_fmt_num(rates.get('rate_15m_pct_h'), '%/h', 1, signed=True)} "
         f"| 60m Avg {_fmt_num(rates.get('rate_60m_pct_h'), '%/h', 1, signed=True)} "
         f"(samples={rates.get('sample_count', 0)})"
     )
+    if batt["on_ac"]:
+        adq = evaluate_charger_adequacy(cfg, t, rates)
+        adq_label = "INSUFFICIENT (<30% triggers upgrade alert)" if adq["insufficient"] else "SUFFICIENT"
+        print(f"  Charger Check   : [{adq_label}] {adq['reason']} (policy={adq['policy']})")
     print(
         f"  Temperature     : Pack {_fmt_num(t.get('temp_c'), ' C', 2)} "
         f"| Virtual {_fmt_num(t.get('virtual_temp_c'), ' C', 2)} "
@@ -1355,14 +1559,17 @@ def main() -> None:
         )
     elif args.test_upgrade:
         telemetry = read_smart_battery_telemetry()
+        rates = record_and_compute_rates(state, telemetry, True, max(low_th - 6, 24), append=False)
+        adq = evaluate_charger_adequacy(cfg, telemetry, rates)
         preview_pct = max(low_th - 6, 24)
         trigger_fullscreen_alert(
             "upgrade_charger",
             preview_pct,
-            f"[Test Preview] {format_upgrade_charger_message(device_name, preview_pct, low_th, crit_th, telemetry)}",
+            f"[Test Preview] {format_upgrade_charger_message(device_name, preview_pct, low_th, crit_th, telemetry, rates=rates, adequacy=adq)}",
             device_name,
             dismiss_policy="change",
             recovery_percent=low_th,
+            policy_hint=str(adq["policy"]),
         )
     elif args.test_critical:
         to_addr = sanitize_header_token(cfg.get("email", {}).get("to_email", "you@example.com"))

@@ -8,6 +8,7 @@
   "low_only_on_battery": true,
   "low_snooze_minutes": 5,
   "low_on_ac_upgrade_charger": true,
+  "low_on_ac_policy": "smart",
   "low_on_ac_snooze_minutes": 5,
   "low_on_ac_min_battery_watts": null,
   "low_on_ac_min_adapter_watts": null,

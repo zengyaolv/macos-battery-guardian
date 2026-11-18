@@ -24,7 +24,7 @@ A lightweight, silent, native macOS battery health monitor that displays full-sc
 - **Smart Thresholds (Configurable)**:
   - **High Battery (`> 70%` on AC)**: Reminds you to unplug your charger to slow battery wear.
   - **Low Battery (`< 30%` on battery)**: Reminds you to plug in your charger.
-  - **Low Battery Even on AC (`< 30%` on AC)**: Displays an amber prompt recommending a **higher-wattage USB-C PD charger** along with live Adapter Wattage, Net Battery Power (`+/- W`), and `%/h` charge rate (auto-closes once SoC recovers `>= 30%` or AC is unplugged).
+  - **Low Battery Even on AC (`< 30%` on AC when Charging < Drain)**: Compares live charger input (`SystemPowerIn`) and net battery rate (`BatteryPower`, `%/h`) against system consumption (`SystemLoad` & recent unplugged drain `%/h`). Whenever `< 30%` on AC and charging cannot keep up (`Net <= 0 W`, `15m <= 0%/h`, or `Net < SystemLoad` while `< 15 W`), pops an amber prompt to switch to a higher-wattage USB-C PD charger (auto-closes on `>= 30%`, fast PD swap, or unplug).
   - **Critical Low Battery (`< 15%` unplugged for >= 10 minutes)**: Triggers a critical red full-screen alert and dispatches an emergency email notification containing your device name, battery level, and status.
 - **Meeting / Quiet Mode**: Pause full-screen popups for 2 or 4 hours via the on-screen button, CLI, double-clickable `MeetingModeToggle.command`, or recurring weekly schedules in `config.json`.
 - **Multiple Email Backends**: Supports Apple **Mail.app**, direct **SMTP** (`SSL`/`STARTTLS`), or remote **SSH `sendmail`** relay.
@@ -91,7 +91,8 @@ You can also double-click `MeetingModeToggle.command` in Finder to open the HUD 
 | `low_threshold_percent` | `30` | Trigger low-battery alert below this percentage. |
 | `low_only_on_battery` | `true` | Only show `"low"` plug-in alert while running on battery. |
 | `low_snooze_minutes` | `5` | Cooldown before re-alerting if still below low threshold. |
-| `low_on_ac_upgrade_charger` | `true` | Even when connected to AC, prompt to switch to a higher-wattage charger whenever battery is `< low_threshold_percent`. |
+| `low_on_ac_upgrade_charger` | `true` | Detect charging rate vs drain rate below `low_threshold_percent` on AC and prompt for a higher-wattage charger when insufficient. |
+| `low_on_ac_policy` | `"smart"` | `"smart"` (triggers on net drain `<= 0 W` or when net charge `< SystemLoad` while `< 15 W`), `"deficit_only"` (strict `<= 0 W` / `<= 0%/h` net drain), or `"always"` (any charger `< 30%`). |
 | `low_on_ac_snooze_minutes` | `5` | Cooldown before repeating the `<30%` higher-wattage charger prompt while on AC. |
 | `low_on_ac_min_battery_watts` | `null` | Optional: suppress the `<30%` AC upgrade prompt if net battery charging power meets or exceeds this wattage (`W`). |
 | `low_on_ac_min_adapter_watts` | `null` | Optional: suppress the `<30%` AC upgrade prompt if connected adapter rated wattage meets or exceeds this value (`W`). |

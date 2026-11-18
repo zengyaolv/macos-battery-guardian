@@ -83,15 +83,15 @@
   <rect x="478" y="194" width="214" height="292" rx="14" fill="#261704" stroke="#F59E0B" stroke-width="2.4"/>
   <rect x="492" y="208" width="186" height="24" rx="6" fill="#78350F"/>
   <text x="585" y="224" text-anchor="middle" fill="#FDE68A" font-family="SF Mono, Menlo, Consolas, monospace" font-size="10.5" font-weight="700">NEW: UPGRADE CHARGER</text>
-  <text x="585" y="256" text-anchor="middle" fill="#FFFFFF" font-family="-apple-system, BlinkMacSystemFont, Segoe UI, Helvetica, Arial, sans-serif" font-size="16" font-weight="700">&lt; 30% Even on AC</text>
-  <text x="585" y="276" text-anchor="middle" fill="#FCD34D" font-family="-apple-system, BlinkMacSystemFont, Segoe UI, Helvetica, Arial, sans-serif" font-size="12">(Low SoC While Plugged In)</text>
+  <text x="585" y="256" text-anchor="middle" fill="#FFFFFF" font-family="-apple-system, BlinkMacSystemFont, Segoe UI, Helvetica, Arial, sans-serif" font-size="16" font-weight="700">&lt; 30% on AC (Slow)</text>
+  <text x="585" y="276" text-anchor="middle" fill="#FCD34D" font-family="-apple-system, BlinkMacSystemFont, Segoe UI, Helvetica, Arial, sans-serif" font-size="11.5">(Charge Rate &lt; Drain Rate)</text>
   <line x1="494" y1="292" x2="676" y2="292" stroke="#78350F" stroke-width="1"/>
   <text x="494" y="314" fill="#E2E8F0" font-family="-apple-system, BlinkMacSystemFont, Segoe UI, Helvetica, Arial, sans-serif" font-size="12">• Silent amber fullscreen</text>
-  <text x="494" y="336" fill="#E2E8F0" font-family="-apple-system, BlinkMacSystemFont, Segoe UI, Helvetica, Arial, sans-serif" font-size="12">• Prompts larger USB-C PD</text>
-  <text x="494" y="358" fill="#FDE68A" font-family="-apple-system, BlinkMacSystemFont, Segoe UI, Helvetica, Arial, sans-serif" font-size="11.5">• Shows Adapter W, Net W</text>
-  <text x="502" y="376" fill="#FDE68A" font-family="-apple-system, BlinkMacSystemFont, Segoe UI, Helvetica, Arial, sans-serif" font-size="11.5">&amp; flags net drain (&lt;= 0 W)</text>
+  <text x="494" y="336" fill="#E2E8F0" font-family="-apple-system, BlinkMacSystemFont, Segoe UI, Helvetica, Arial, sans-serif" font-size="12">• Compares ChgIn vs Drain</text>
+  <text x="494" y="358" fill="#FDE68A" font-family="-apple-system, BlinkMacSystemFont, Segoe UI, Helvetica, Arial, sans-serif" font-size="11.5">• Alerts if Net &lt;= 0 W or</text>
+  <text x="502" y="376" fill="#FDE68A" font-family="-apple-system, BlinkMacSystemFont, Segoe UI, Helvetica, Arial, sans-serif" font-size="11.5">Net &lt; SysLoad (&amp; &lt; 15 W)</text>
   <text x="494" y="400" fill="#CBD5E1" font-family="-apple-system, BlinkMacSystemFont, Segoe UI, Helvetica, Arial, sans-serif" font-size="11.5">Auto-dismiss:</text>
-  <text x="502" y="418" fill="#86EFAC" font-family="-apple-system, BlinkMacSystemFont, Segoe UI, Helvetica, Arial, sans-serif" font-size="11.5">When SoC reaches &gt;= 30%</text>
+  <text x="502" y="418" fill="#86EFAC" font-family="-apple-system, BlinkMacSystemFont, Segoe UI, Helvetica, Arial, sans-serif" font-size="11.5">SoC &gt;= 30%, fast PD swap,</text>
   <text x="502" y="434" fill="#86EFAC" font-family="-apple-system, BlinkMacSystemFont, Segoe UI, Helvetica, Arial, sans-serif" font-size="11.5">or on unplug / Esc key</text>
   <rect x="492" y="452" width="186" height="22" rx="5" fill="#451A03"/>
   <text x="585" y="467" text-anchor="middle" fill="#FDE68A" font-family="SF Mono, Menlo, Consolas, monospace" font-size="10.5">./manage.sh test-upgrade</text>

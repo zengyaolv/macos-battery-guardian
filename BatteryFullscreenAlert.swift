@@ -10,6 +10,7 @@ import IOKit.ps
 // 5: state.json path (optional, for writing pause_until_ts when clicking Pause 2h)
 // 6: dismissPolicy ("auto" | "change" | "manual", default "auto")
 // 7: recoveryThreshold (optional integer %, e.g. "30" for upgrade_charger auto-dismiss)
+// 8: policyHint (optional "smart" | "deficit_only" | "always")
 
 struct BatteryHUDTelemetry {
     var osPercent: Int?
@@ -34,6 +35,7 @@ struct BatteryHUDTelemetry {
     var adapterWatts: Int?
     var adapterDesc: String = ""
     var instRatePctH: Double?
+    var drainEquivPctH: Double?
     var tempC: Double?
     var minTempC: Int?
     var maxTempC: Int?
@@ -220,6 +222,12 @@ enum SmartBatteryReader {
         let denomMah = (t.rawMaxMah ?? 0) > 0 ? t.rawMaxMah : t.nominalMah
         if let ma = t.amperageMa, let denom = denomMah, denom > 0 {
             t.instRatePctH = (Double(ma) / Double(denom)) * 100.0
+        }
+        if let sysW = t.systemLoadW, let denom = denomMah, denom > 0, let mv = t.voltageMv, mv > 0 {
+            let packWh = (Double(denom) / 1000.0) * (Double(mv) / 1000.0)
+            if packWh > 0 {
+                t.drainEquivPctH = (sysW / packWh) * 100.0
+            }
         }
 
         let lifetime = (packBdata["LifetimeData"] as? [String: Any])
@@ -434,6 +442,7 @@ class AlertOverlayApp: NSObject, NSApplicationDelegate {
     let statePath: String
     let dismissPolicy: String
     let recoveryThreshold: Int?
+    let policyHint: String
     let initialOnAC: Bool
     var powerWatcher: PowerWatcher?
     var telemetryTimer: Timer?
@@ -445,7 +454,8 @@ class AlertOverlayApp: NSObject, NSApplicationDelegate {
         deviceName: String,
         statePath: String,
         dismissPolicy: String,
-        recoveryThreshold: Int? = nil
+        recoveryThreshold: Int? = nil,
+        policyHint: String = ""
     ) {
         self.mode = mode
         self.percent = percent
@@ -454,6 +464,7 @@ class AlertOverlayApp: NSObject, NSApplicationDelegate {
         self.statePath = statePath
         self.dismissPolicy = dismissPolicy
         self.recoveryThreshold = recoveryThreshold
+        self.policyHint = policyHint
         self.initialOnAC = SmartBatteryReader.readTelemetry()?.externalConnected ?? PowerWatcher.isDrawingFromACPower()
         super.init()
     }
@@ -504,7 +515,15 @@ class AlertOverlayApp: NSObject, NSApplicationDelegate {
                 shouldDismiss = !nowOnAC
             } else if mode == "upgrade_charger" {
                 let recovered = (recoveryThreshold != nil && (tel?.osPercent ?? -1) >= recoveryThreshold!)
-                shouldDismiss = (!nowOnAC) || recovered
+                var upgraded = false
+                if let bp = tel?.batteryPowerW {
+                    if policyHint == "smart" && bp >= 20.0 {
+                        upgraded = true
+                    } else if policyHint == "deficit_only" && bp >= 5.0 {
+                        upgraded = true
+                    }
+                }
+                shouldDismiss = (!nowOnAC) || recovered || upgraded
             } else {
                 // "low" or "critical"
                 shouldDismiss = nowOnAC
@@ -566,14 +585,22 @@ class AlertOverlayApp: NSObject, NSApplicationDelegate {
             }
             widgets.tiles[1].detailLabel.stringValue = "Gauge \(t.gaugeModel) · Serial \(t.maskedSerial)"
 
-            // Tile 2: Live Power & Rate
+            // Tile 2: Charge vs Drain Rate
             let pwrStr = t.batteryPowerW.map { String(format: "%+.1f W", $0) } ?? "-- W"
             let rateStr = t.instRatePctH.map { String(format: " (%+.1f%%/h)", $0) } ?? ""
             widgets.tiles[2].valueLabel.stringValue = "\(pwrStr)\(rateStr)"
-            let ampStr = t.amperageMa.map { String(format: "%+d mA", $0) } ?? "-- mA"
-            let voltStr = t.voltageMv.map { String(format: "%.2f V", Double($0) / 1000.0) } ?? "-- V"
-            let sysStr = t.systemLoadW.map { String(format: " · Sys %.1f W", $0) } ?? ""
-            widgets.tiles[2].detailLabel.stringValue = "\(ampStr) @ \(voltStr)\(sysStr)"
+            let wallStr = t.wallInW.map { String(format: "%.1fW", $0) } ?? "--"
+            let sysStr = t.systemLoadW.map { String(format: "%.1fW", $0) } ?? "--"
+            let drainRateStr = t.drainEquivPctH.map { String(format: " (%.0f%%/h)", $0) } ?? ""
+            let ampStr = t.amperageMa.map { String(format: "%+dmA", $0) } ?? "--mA"
+            let voltStr = t.voltageMv.map { String(format: "%.2fV", Double($0) / 1000.0) } ?? "--V"
+            let adpStr = (onAC && (t.adapterWatts ?? 0) > 0) ? " · Adp \(t.adapterWatts!)W" : ""
+            widgets.tiles[2].detailLabel.stringValue = "In \(wallStr) vs Drain \(sysStr)\(drainRateStr)\n\(ampStr) @ \(voltStr)\(adpStr)"
+            if onAC, let bp = t.batteryPowerW, bp <= 0.0 || (bp < (t.systemLoadW ?? 0.0) && bp < 15.0) {
+                widgets.tiles[2].valueLabel.textColor = NSColor(calibratedRed: 1.0, green: 0.65, blue: 0.22, alpha: 1.0)
+            } else {
+                widgets.tiles[2].valueLabel.textColor = .white
+            }
 
             // Tile 3: Pack Temperature
             if let temp = t.tempC {
@@ -753,7 +780,7 @@ class AlertOverlayApp: NSObject, NSApplicationDelegate {
         let tileTitles = [
             "TRUE HEALTH & CAPACITY",
             "CYCLES & GAS GAUGE",
-            "LIVE POWER & RATE",
+            "CHARGE VS DRAIN RATE",
             "PACK TEMPERATURE",
             "CELL BALANCE & IMPEDANCE",
             "ANTI-SPOOFING FORENSICS",
@@ -787,7 +814,7 @@ class AlertOverlayApp: NSObject, NSApplicationDelegate {
             tileBox.addSubview(tTitle)
 
             let tValue = NSTextField(labelWithString: "--")
-            tValue.font = NSFont.systemFont(ofSize: 19, weight: .bold)
+            tValue.font = NSFont.systemFont(ofSize: 17.5, weight: .bold)
             tValue.textColor = .white
             tValue.lineBreakMode = .byTruncatingTail
             tValue.frame = NSRect(x: 12, y: tileH - 52, width: tileW - 24, height: 24)
@@ -907,6 +934,7 @@ let deviceName = args.count > 4 ? args[4] : "MacBook"
 let statePath = args.count > 5 ? args[5] : ""
 let dismissPolicy = args.count > 6 ? args[6] : "auto"
 let recoveryThreshold = args.count > 7 ? Int(args[7]) : nil
+let policyHint = args.count > 8 ? args[8] : ""
 
 let app = NSApplication.shared
 let delegate = AlertOverlayApp(
@@ -916,7 +944,8 @@ let delegate = AlertOverlayApp(
     deviceName: deviceName,
     statePath: statePath,
     dismissPolicy: dismissPolicy,
-    recoveryThreshold: recoveryThreshold
+    recoveryThreshold: recoveryThreshold,
+    policyHint: policyHint
 )
 app.delegate = delegate
 app.run()

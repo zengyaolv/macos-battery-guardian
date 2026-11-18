@@ -47,10 +47,10 @@
 
   <!-- Tile 2 -->
   <rect x="372" y="216" width="144" height="96" rx="10" fill="#1F2430" stroke="#334155" stroke-width="1"/>
-  <text x="382" y="235" fill="#38BDF8" font-family="SF Mono, Menlo, Consolas, monospace" font-size="9.5" font-weight="700">POWER &amp; RATE</text>
+  <text x="382" y="235" fill="#38BDF8" font-family="SF Mono, Menlo, Consolas, monospace" font-size="9.5" font-weight="700">CHARGE VS DRAIN</text>
   <text x="382" y="261" fill="#FFFFFF" font-family="-apple-system, BlinkMacSystemFont, Segoe UI, Helvetica, Arial, sans-serif" font-size="14" font-weight="700">+48.1 W (+53%/h)</text>
-  <text x="382" y="282" fill="#94A3B8" font-family="-apple-system, BlinkMacSystemFont, Segoe UI, Helvetica, Arial, sans-serif" font-size="10">+4,042 mA @ 11.89 V</text>
-  <text x="382" y="297" fill="#94A3B8" font-family="-apple-system, BlinkMacSystemFont, Segoe UI, Helvetica, Arial, sans-serif" font-size="10">Sys Load 15.6 W</text>
+  <text x="382" y="282" fill="#94A3B8" font-family="-apple-system, BlinkMacSystemFont, Segoe UI, Helvetica, Arial, sans-serif" font-size="9.5">In 63.7W vs Drain 15.6W</text>
+  <text x="382" y="297" fill="#94A3B8" font-family="-apple-system, BlinkMacSystemFont, Segoe UI, Helvetica, Arial, sans-serif" font-size="9.5">+4042mA @ 11.89V · 96W</text>
 
   <!-- Tile 3 -->
   <rect x="68" y="324" width="144" height="96" rx="10" fill="#1F2430" stroke="#334155" stroke-width="1"/>
@@ -117,10 +117,10 @@
 
   <!-- Tile 2 (Highlighted Deficit) -->
   <rect x="908" y="216" width="144" height="96" rx="10" fill="#2D1B10" stroke="#F97316" stroke-width="1.6"/>
-  <text x="918" y="235" fill="#FBBF24" font-family="SF Mono, Menlo, Consolas, monospace" font-size="9.5" font-weight="700">POWER &amp; RATE</text>
+  <text x="918" y="235" fill="#FBBF24" font-family="SF Mono, Menlo, Consolas, monospace" font-size="9.5" font-weight="700">CHARGE VS DRAIN</text>
   <text x="918" y="261" fill="#FB923C" font-family="-apple-system, BlinkMacSystemFont, Segoe UI, Helvetica, Arial, sans-serif" font-size="14" font-weight="700">-8.7 W (-11%/h)</text>
-  <text x="918" y="282" fill="#FED7AA" font-family="-apple-system, BlinkMacSystemFont, Segoe UI, Helvetica, Arial, sans-serif" font-size="10">-739 mA @ 11.72 V</text>
-  <text x="918" y="297" fill="#FED7AA" font-family="-apple-system, BlinkMacSystemFont, Segoe UI, Helvetica, Arial, sans-serif" font-size="10">Adapter 20W · Sys 19.6W</text>
+  <text x="918" y="282" fill="#FED7AA" font-family="-apple-system, BlinkMacSystemFont, Segoe UI, Helvetica, Arial, sans-serif" font-size="9.5">In 10.9W vs Drain 19.6W</text>
+  <text x="918" y="297" fill="#FED7AA" font-family="-apple-system, BlinkMacSystemFont, Segoe UI, Helvetica, Arial, sans-serif" font-size="9.5">-739mA @ 11.72V · 20W</text>
 
   <!-- Tile 3 -->
   <rect x="604" y="324" width="144" height="96" rx="10" fill="#262019" stroke="#57534E" stroke-width="1"/>
