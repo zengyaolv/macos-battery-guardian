@@ -1,0 +1,158 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1120 620" width="1120" height="620">
+  <defs>
+    <linearGradient id="screenBg" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#0A111F"/>
+      <stop offset="100%" stop-color="#0F172A"/>
+    </linearGradient>
+  </defs>
+
+  <rect width="1120" height="620" rx="20" fill="url(#screenBg)"/>
+  <rect x="16" y="16" width="1088" height="588" rx="16" fill="none" stroke="#1E293B" stroke-width="1.5"/>
+
+  <text x="560" y="52" text-anchor="middle" fill="#F8FAFC" font-family="-apple-system, BlinkMacSystemFont, Segoe UI, Helvetica, Arial, sans-serif" font-size="23" font-weight="700">
+    Native Full-Screen Overlays &amp; 2×3 Live IOKit Telemetry HUD
+  </text>
+  <text x="560" y="76" text-anchor="middle" fill="#94A3B8" font-family="-apple-system, BlinkMacSystemFont, Segoe UI, Helvetica, Arial, sans-serif" font-size="13.5">
+    Rendered with Cocoa / AppKit across all Displays &amp; Spaces · Live 2s IOKit Refresh (Illustrative Sample Telemetry)
+  </text>
+
+  <!-- LEFT MOCKUP: Live Telemetry & Forensics HUD (inspect mode) -->
+  <rect x="36" y="98" width="512" height="492" rx="20" fill="#071628" stroke="#38BDF8" stroke-width="2.5"/>
+  <rect x="52" y="114" width="480" height="460" rx="16" fill="#14171F" stroke="#38BDF8" stroke-width="1.2"/>
+
+  <text x="292" y="144" text-anchor="middle" fill="#38BDF8" font-family="SF Mono, Menlo, Consolas, monospace" font-size="11" font-weight="700">
+    [MacBook] BATTERY HEALTH &amp; FORENSICS HUD (0-RISK READ-ONLY)
+  </text>
+  <text x="292" y="176" text-anchor="middle" fill="#FFFFFF" font-family="-apple-system, BlinkMacSystemFont, Segoe UI, Helvetica, Arial, sans-serif" font-size="23" font-weight="800">
+    MacBook · 52% · Health 87.8%
+  </text>
+  <text x="292" y="198" text-anchor="middle" fill="#CBD5E1" font-family="-apple-system, BlinkMacSystemFont, Segoe UI, Helvetica, Arial, sans-serif" font-size="11.5">
+    AC Power Connected · Adapter 96 W · Live IOKit 2s refresh · Esc to close
+  </text>
+
+  <!-- Left 2x3 Tile Grid -->
+  <!-- Tile 0 -->
+  <rect x="68" y="216" width="144" height="96" rx="10" fill="#1F2430" stroke="#334155" stroke-width="1"/>
+  <text x="78" y="235" fill="#38BDF8" font-family="SF Mono, Menlo, Consolas, monospace" font-size="9.5" font-weight="700">TRUE HEALTH</text>
+  <text x="78" y="262" fill="#FFFFFF" font-family="-apple-system, BlinkMacSystemFont, Segoe UI, Helvetica, Arial, sans-serif" font-size="18" font-weight="700">87.8%</text>
+  <text x="78" y="282" fill="#94A3B8" font-family="-apple-system, BlinkMacSystemFont, Segoe UI, Helvetica, Arial, sans-serif" font-size="10">7,636 / 8,694 mAh</text>
+  <text x="78" y="297" fill="#94A3B8" font-family="-apple-system, BlinkMacSystemFont, Segoe UI, Helvetica, Arial, sans-serif" font-size="10">Nom 7,880 mAh</text>
+
+  <!-- Tile 1 -->
+  <rect x="220" y="216" width="144" height="96" rx="10" fill="#1F2430" stroke="#334155" stroke-width="1"/>
+  <text x="230" y="235" fill="#38BDF8" font-family="SF Mono, Menlo, Consolas, monospace" font-size="9.5" font-weight="700">CYCLES &amp; GAUGE</text>
+  <text x="230" y="262" fill="#FFFFFF" font-family="-apple-system, BlinkMacSystemFont, Segoe UI, Helvetica, Arial, sans-serif" font-size="18" font-weight="700">310 / 1,000</text>
+  <text x="230" y="282" fill="#94A3B8" font-family="-apple-system, BlinkMacSystemFont, Segoe UI, Helvetica, Arial, sans-serif" font-size="10">Gauge bq40z651</text>
+  <text x="230" y="297" fill="#94A3B8" font-family="-apple-system, BlinkMacSystemFont, Segoe UI, Helvetica, Arial, sans-serif" font-size="10">Serial XX****YY (masked)</text>
+
+  <!-- Tile 2 -->
+  <rect x="372" y="216" width="144" height="96" rx="10" fill="#1F2430" stroke="#334155" stroke-width="1"/>
+  <text x="382" y="235" fill="#38BDF8" font-family="SF Mono, Menlo, Consolas, monospace" font-size="9.5" font-weight="700">POWER &amp; RATE</text>
+  <text x="382" y="261" fill="#FFFFFF" font-family="-apple-system, BlinkMacSystemFont, Segoe UI, Helvetica, Arial, sans-serif" font-size="14" font-weight="700">+48.1 W (+53%/h)</text>
+  <text x="382" y="282" fill="#94A3B8" font-family="-apple-system, BlinkMacSystemFont, Segoe UI, Helvetica, Arial, sans-serif" font-size="10">+4,042 mA @ 11.89 V</text>
+  <text x="382" y="297" fill="#94A3B8" font-family="-apple-system, BlinkMacSystemFont, Segoe UI, Helvetica, Arial, sans-serif" font-size="10">Sys Load 15.6 W</text>
+
+  <!-- Tile 3 -->
+  <rect x="68" y="324" width="144" height="96" rx="10" fill="#1F2430" stroke="#334155" stroke-width="1"/>
+  <text x="78" y="343" fill="#38BDF8" font-family="SF Mono, Menlo, Consolas, monospace" font-size="9.5" font-weight="700">TEMPERATURE</text>
+  <text x="78" y="370" fill="#FFFFFF" font-family="-apple-system, BlinkMacSystemFont, Segoe UI, Helvetica, Arial, sans-serif" font-size="18" font-weight="700">28.0 °C</text>
+  <text x="78" y="390" fill="#94A3B8" font-family="-apple-system, BlinkMacSystemFont, Segoe UI, Helvetica, Arial, sans-serif" font-size="10">Avg 23.3 °C</text>
+  <text x="78" y="405" fill="#94A3B8" font-family="-apple-system, BlinkMacSystemFont, Segoe UI, Helvetica, Arial, sans-serif" font-size="10">Range 12° .. 42°C</text>
+
+  <!-- Tile 4 -->
+  <rect x="220" y="324" width="144" height="96" rx="10" fill="#1F2430" stroke="#334155" stroke-width="1"/>
+  <text x="230" y="343" fill="#38BDF8" font-family="SF Mono, Menlo, Consolas, monospace" font-size="9.5" font-weight="700">CELL BALANCE</text>
+  <text x="230" y="370" fill="#FFFFFF" font-family="-apple-system, BlinkMacSystemFont, Segoe UI, Helvetica, Arial, sans-serif" font-size="18" font-weight="700">Δ 14 mV</text>
+  <text x="230" y="390" fill="#94A3B8" font-family="-apple-system, BlinkMacSystemFont, Segoe UI, Helvetica, Arial, sans-serif" font-size="10">3967/3953/3965 mV</text>
+  <text x="230" y="405" fill="#94A3B8" font-family="-apple-system, BlinkMacSystemFont, Segoe UI, Helvetica, Arial, sans-serif" font-size="10">Ra 71/72/77 mΩ</text>
+
+  <!-- Tile 5 -->
+  <rect x="372" y="324" width="144" height="96" rx="10" fill="#1F2430" stroke="#10B981" stroke-width="1.6"/>
+  <text x="382" y="343" fill="#38BDF8" font-family="SF Mono, Menlo, Consolas, monospace" font-size="9.5" font-weight="700">FORENSICS</text>
+  <text x="382" y="370" fill="#34D399" font-family="-apple-system, BlinkMacSystemFont, Segoe UI, Helvetica, Arial, sans-serif" font-size="15.5" font-weight="700">PASS · Genuine</text>
+  <text x="382" y="390" fill="#94A3B8" font-family="-apple-system, BlinkMacSystemFont, Segoe UI, Helvetica, Arial, sans-serif" font-size="10">Calib @293 &lt;= 310</text>
+  <text x="382" y="405" fill="#94A3B8" font-family="-apple-system, BlinkMacSystemFont, Segoe UI, Helvetica, Arial, sans-serif" font-size="10">Clock diff 0.00%</text>
+
+  <!-- Left Buttons -->
+  <rect x="142" y="446" width="300" height="44" rx="10" fill="#38BDF8"/>
+  <text x="292" y="474" text-anchor="middle" fill="#0F172A" font-family="-apple-system, BlinkMacSystemFont, Segoe UI, Helvetica, Arial, sans-serif" font-size="14" font-weight="700">
+    Dismiss (Esc / Enter / Space)
+  </text>
+  <rect x="162" y="502" width="260" height="34" rx="8" fill="#334155"/>
+  <text x="292" y="524" text-anchor="middle" fill="#F8FAFC" font-family="-apple-system, BlinkMacSystemFont, Segoe UI, Helvetica, Arial, sans-serif" font-size="12">
+    Pause Fullscreen Alerts for 2 Hours
+  </text>
+  <text x="292" y="558" text-anchor="middle" fill="#38BDF8" font-family="SF Mono, Menlo, Consolas, monospace" font-size="11.5">
+    Command: ./manage.sh hud
+  </text>
+
+  <!-- RIGHT MOCKUP: <30% on AC Upgrade Charger Alert -->
+  <rect x="572" y="98" width="512" height="492" rx="20" fill="#3D2105" stroke="#FBBF24" stroke-width="2.5"/>
+  <rect x="588" y="114" width="480" height="460" rx="16" fill="#181512" stroke="#FBBF24" stroke-width="1.2"/>
+
+  <text x="828" y="144" text-anchor="middle" fill="#FBBF24" font-family="SF Mono, Menlo, Consolas, monospace" font-size="10.5" font-weight="700">
+    [MacBook] LOW BATTERY ON AC (&lt; 30% · SWITCH TO HIGHER-WATTAGE CHARGER)
+  </text>
+  <text x="828" y="176" text-anchor="middle" fill="#FFFFFF" font-family="-apple-system, BlinkMacSystemFont, Segoe UI, Helvetica, Arial, sans-serif" font-size="23" font-weight="800">
+    MacBook at 24% (On AC)
+  </text>
+  <text x="828" y="198" text-anchor="middle" fill="#FDE68A" font-family="-apple-system, BlinkMacSystemFont, Segoe UI, Helvetica, Arial, sans-serif" font-size="10.5">
+    Net battery drain (-8.7 W, -11.2%/h) on 20 W AC · Switch to higher-wattage PD!
+  </text>
+
+  <!-- Right 2x3 Tile Grid -->
+  <!-- Tile 0 -->
+  <rect x="604" y="216" width="144" height="96" rx="10" fill="#262019" stroke="#57534E" stroke-width="1"/>
+  <text x="614" y="235" fill="#FBBF24" font-family="SF Mono, Menlo, Consolas, monospace" font-size="9.5" font-weight="700">TRUE HEALTH</text>
+  <text x="614" y="262" fill="#FFFFFF" font-family="-apple-system, BlinkMacSystemFont, Segoe UI, Helvetica, Arial, sans-serif" font-size="18" font-weight="700">87.8%</text>
+  <text x="614" y="282" fill="#D6D3D1" font-family="-apple-system, BlinkMacSystemFont, Segoe UI, Helvetica, Arial, sans-serif" font-size="10">7,636 / 8,694 mAh</text>
+  <text x="614" y="297" fill="#D6D3D1" font-family="-apple-system, BlinkMacSystemFont, Segoe UI, Helvetica, Arial, sans-serif" font-size="10">Nom 7,880 mAh</text>
+
+  <!-- Tile 1 -->
+  <rect x="756" y="216" width="144" height="96" rx="10" fill="#262019" stroke="#57534E" stroke-width="1"/>
+  <text x="766" y="235" fill="#FBBF24" font-family="SF Mono, Menlo, Consolas, monospace" font-size="9.5" font-weight="700">CYCLES &amp; GAUGE</text>
+  <text x="766" y="262" fill="#FFFFFF" font-family="-apple-system, BlinkMacSystemFont, Segoe UI, Helvetica, Arial, sans-serif" font-size="18" font-weight="700">310 / 1,000</text>
+  <text x="766" y="282" fill="#D6D3D1" font-family="-apple-system, BlinkMacSystemFont, Segoe UI, Helvetica, Arial, sans-serif" font-size="10">Gauge bq40z651</text>
+  <text x="766" y="297" fill="#D6D3D1" font-family="-apple-system, BlinkMacSystemFont, Segoe UI, Helvetica, Arial, sans-serif" font-size="10">Serial XX****YY (masked)</text>
+
+  <!-- Tile 2 (Highlighted Deficit) -->
+  <rect x="908" y="216" width="144" height="96" rx="10" fill="#2D1B10" stroke="#F97316" stroke-width="1.6"/>
+  <text x="918" y="235" fill="#FBBF24" font-family="SF Mono, Menlo, Consolas, monospace" font-size="9.5" font-weight="700">POWER &amp; RATE</text>
+  <text x="918" y="261" fill="#FB923C" font-family="-apple-system, BlinkMacSystemFont, Segoe UI, Helvetica, Arial, sans-serif" font-size="14" font-weight="700">-8.7 W (-11%/h)</text>
+  <text x="918" y="282" fill="#FED7AA" font-family="-apple-system, BlinkMacSystemFont, Segoe UI, Helvetica, Arial, sans-serif" font-size="10">-739 mA @ 11.72 V</text>
+  <text x="918" y="297" fill="#FED7AA" font-family="-apple-system, BlinkMacSystemFont, Segoe UI, Helvetica, Arial, sans-serif" font-size="10">Adapter 20W · Sys 19.6W</text>
+
+  <!-- Tile 3 -->
+  <rect x="604" y="324" width="144" height="96" rx="10" fill="#262019" stroke="#57534E" stroke-width="1"/>
+  <text x="614" y="343" fill="#FBBF24" font-family="SF Mono, Menlo, Consolas, monospace" font-size="9.5" font-weight="700">TEMPERATURE</text>
+  <text x="614" y="370" fill="#FFFFFF" font-family="-apple-system, BlinkMacSystemFont, Segoe UI, Helvetica, Arial, sans-serif" font-size="18" font-weight="700">29.4 °C</text>
+  <text x="614" y="390" fill="#D6D3D1" font-family="-apple-system, BlinkMacSystemFont, Segoe UI, Helvetica, Arial, sans-serif" font-size="10">Avg 23.3 °C</text>
+  <text x="614" y="405" fill="#D6D3D1" font-family="-apple-system, BlinkMacSystemFont, Segoe UI, Helvetica, Arial, sans-serif" font-size="10">Range 12° .. 42°C</text>
+
+  <!-- Tile 4 -->
+  <rect x="756" y="324" width="144" height="96" rx="10" fill="#262019" stroke="#57534E" stroke-width="1"/>
+  <text x="766" y="343" fill="#FBBF24" font-family="SF Mono, Menlo, Consolas, monospace" font-size="9.5" font-weight="700">CELL BALANCE</text>
+  <text x="766" y="370" fill="#FFFFFF" font-family="-apple-system, BlinkMacSystemFont, Segoe UI, Helvetica, Arial, sans-serif" font-size="18" font-weight="700">Δ 18 mV</text>
+  <text x="766" y="390" fill="#D6D3D1" font-family="-apple-system, BlinkMacSystemFont, Segoe UI, Helvetica, Arial, sans-serif" font-size="10">3912/3894/3908 mV</text>
+  <text x="766" y="405" fill="#D6D3D1" font-family="-apple-system, BlinkMacSystemFont, Segoe UI, Helvetica, Arial, sans-serif" font-size="10">Ra 71/72/77 mΩ</text>
+
+  <!-- Tile 5 -->
+  <rect x="908" y="324" width="144" height="96" rx="10" fill="#262019" stroke="#10B981" stroke-width="1.6"/>
+  <text x="918" y="343" fill="#FBBF24" font-family="SF Mono, Menlo, Consolas, monospace" font-size="9.5" font-weight="700">FORENSICS</text>
+  <text x="918" y="370" fill="#34D399" font-family="-apple-system, BlinkMacSystemFont, Segoe UI, Helvetica, Arial, sans-serif" font-size="15.5" font-weight="700">PASS · Genuine</text>
+  <text x="918" y="390" fill="#D6D3D1" font-family="-apple-system, BlinkMacSystemFont, Segoe UI, Helvetica, Arial, sans-serif" font-size="10">Calib @293 &lt;= 310</text>
+  <text x="918" y="405" fill="#D6D3D1" font-family="-apple-system, BlinkMacSystemFont, Segoe UI, Helvetica, Arial, sans-serif" font-size="10">Clock diff 0.00%</text>
+
+  <!-- Right Buttons -->
+  <rect x="678" y="446" width="300" height="44" rx="10" fill="#FBBF24"/>
+  <text x="828" y="474" text-anchor="middle" fill="#0F172A" font-family="-apple-system, BlinkMacSystemFont, Segoe UI, Helvetica, Arial, sans-serif" font-size="14" font-weight="700">
+    Dismiss (Esc / Enter / Space)
+  </text>
+  <rect x="698" y="502" width="260" height="34" rx="8" fill="#44403C"/>
+  <text x="828" y="524" text-anchor="middle" fill="#FAFAF9" font-family="-apple-system, BlinkMacSystemFont, Segoe UI, Helvetica, Arial, sans-serif" font-size="12">
+    Pause Fullscreen Alerts for 2 Hours
+  </text>
+  <text x="828" y="558" text-anchor="middle" fill="#FBBF24" font-family="SF Mono, Menlo, Consolas, monospace" font-size="11.5">
+    Command: ./manage.sh test-upgrade
+  </text>
+</svg>

@@ -1,6 +1,16 @@
 # macOS Battery Guardian
 
-A lightweight, silent, native macOS battery health monitor that displays a full-screen overlay when your battery exceeds **70%** on AC power or drops below **30%** on battery, **auto-dismisses instantly** when you plug or unplug your charger, and sends an emergency email if your Mac remains unplugged below **15%** for an extended period.
+A lightweight, silent, native macOS battery health monitor that displays full-screen overlays when your battery exceeds **70%** on AC power, drops below **30%** on battery, or stays below **30%** even while connected to AC power (prompting you to switch to a higher-wattage charger), **auto-dismisses automatically**, and sends an emergency email if your Mac remains unplugged below **15%** for an extended period.
+
+![Alert & Auto-Dismiss State Machine](docs/battery-state-workflow.svg)
+
+## Visual Feature Overview
+
+### 1. Native Full-Screen Alerts & 2×3 Live Telemetry HUD
+![Native Full-Screen Alerts & Live IOKit HUD](docs/hud-ui-preview.svg)
+
+### 2. Zero-Risk Read-Only Telemetry & Privacy Architecture
+![Zero-Risk Read-Only Security & Privacy Architecture](docs/zero-risk-architecture.svg)
 
 ## Features
 
@@ -10,10 +20,11 @@ A lightweight, silent, native macOS battery health monitor that displays a full-
   - Displays true battery health (`AppleRawMaxCapacity / DesignCapacity`), pack temperature, live watts & charge/discharge rate (`%/h`, instantaneous + 15m/60m sliding windows), multi-bank cell voltage/Qmax/impedance balance, and a **4-Gate TI Gas-Gauge Anti-Spoofing Audit** (`Calibration Timeline`, `Dual-Clock Integrity`, `Cell Balance`, `DataFlash/PF Flags`).
   - Hardware serial numbers are **never** written to disk (`state.json` or logs) and are middle-masked (`XX****YY`) on screen.
 - **Hardened Local Security**: Enforces `0700` runtime directory and `0600` permissions on `config.json`, `state.json`, and log files; generates plists via `plistlib`; defends against SSH option injection, MIME header injection, and AppleScript string escaping; scopes process cleanup strictly to the current UID.
-- **Instant AC Plug / Unplug Auto-Dismiss**: Uses macOS `IOKit.ps` (`IOPSNotificationCreateRunLoopSource` + `0.5s` fallback check) so the full-screen alert disappears automatically the moment you unplug AC power (during `>70%` alerts) or plug in AC power (during `<30%` / `<15%` alerts). You can also dismiss manually with `Esc`, `Enter`, `Space`, or the on-screen button.
+- **Instant AC Plug / Unplug & Recovery Auto-Dismiss**: Uses macOS `IOKit.ps` (`IOPSNotificationCreateRunLoopSource` + `0.5s` fallback check) plus live capacity monitoring so full-screen alerts dismiss automatically when you unplug AC (during `>70%` alerts), plug in AC (during `<30%` battery alerts), or recover `>=30%` / unplug (during `<30%` AC charger-upgrade alerts). You can also dismiss manually with `Esc`, `Enter`, `Space`, or the on-screen button.
 - **Smart Thresholds (Configurable)**:
   - **High Battery (`> 70%` on AC)**: Reminds you to unplug your charger to slow battery wear.
   - **Low Battery (`< 30%` on battery)**: Reminds you to plug in your charger.
+  - **Low Battery Even on AC (`< 30%` on AC)**: Displays an amber prompt recommending a **higher-wattage USB-C PD charger** along with live Adapter Wattage, Net Battery Power (`+/- W`), and `%/h` charge rate (auto-closes once SoC recovers `>= 30%` or AC is unplugged).
   - **Critical Low Battery (`< 15%` unplugged for >= 10 minutes)**: Triggers a critical red full-screen alert and dispatches an emergency email notification containing your device name, battery level, and status.
 - **Meeting / Quiet Mode**: Pause full-screen popups for 2 or 4 hours via the on-screen button, CLI, double-clickable `MeetingModeToggle.command`, or recurring weekly schedules in `config.json`.
 - **Multiple Email Backends**: Supports Apple **Mail.app**, direct **SMTP** (`SSL`/`STARTTLS`), or remote **SSH `sendmail`** relay.
@@ -61,6 +72,7 @@ A lightweight, silent, native macOS battery health monitor that displays a full-
 | `./manage.sh set-email <addr>` | Safely validate and update `email.to_email` in both local and runtime `config.json` (`0600`). |
 | `./manage.sh test-high` | Preview the `>70%` silent fullscreen alert (auto-closes if you plug/unplug AC or press `Esc`). |
 | `./manage.sh test-low` | Preview the `<30%` silent fullscreen alert. |
+| `./manage.sh test-upgrade` | Preview the `<30%` on-AC higher-wattage charger prompt with live telemetry. |
 | `./manage.sh test-critical` | Preview the `<15%` critical fullscreen alert. |
 | `./manage.sh test-email` | Send a test email using the configured backend. |
 | `./manage.sh uninstall` | Unload and remove the background `launchd` agent. |
@@ -76,8 +88,12 @@ You can also double-click `MeetingModeToggle.command` in Finder to open the HUD 
 | `high_only_on_ac` | `true` | Only show high-battery alert while connected to AC power. |
 | `high_snooze_minutes` | `15` | Cooldown before re-alerting if still above high threshold. |
 | `low_threshold_percent` | `30` | Trigger low-battery alert below this percentage. |
-| `low_only_on_battery` | `true` | Only show low-battery alert while running on battery. |
+| `low_only_on_battery` | `true` | Only show `"low"` plug-in alert while running on battery. |
 | `low_snooze_minutes` | `5` | Cooldown before re-alerting if still below low threshold. |
+| `low_on_ac_upgrade_charger` | `true` | Even when connected to AC, prompt to switch to a higher-wattage charger whenever battery is `< low_threshold_percent`. |
+| `low_on_ac_snooze_minutes` | `5` | Cooldown before repeating the `<30%` higher-wattage charger prompt while on AC. |
+| `low_on_ac_min_battery_watts` | `null` | Optional: suppress the `<30%` AC upgrade prompt if net battery charging power meets or exceeds this wattage (`W`). |
+| `low_on_ac_min_adapter_watts` | `null` | Optional: suppress the `<30%` AC upgrade prompt if connected adapter rated wattage meets or exceeds this value (`W`). |
 | `critical_threshold_percent` | `15` | Critical battery threshold for prolonged unplugged alerts. |
 | `critical_unchanged_minutes` | `10` | Unplugged duration below critical threshold before emailing. |
 | `critical_email_repeat_minutes` | `30` | Minimum interval between repeat critical emails. |

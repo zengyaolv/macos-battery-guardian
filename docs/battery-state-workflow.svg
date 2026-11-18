@@ -1,0 +1,139 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1120 620" width="1120" height="620">
+  <defs>
+    <linearGradient id="bgGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#0B1220"/>
+      <stop offset="100%" stop-color="#111B2E"/>
+    </linearGradient>
+    <marker id="arrowCyan" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+      <path d="M 0 1 L 10 5 L 0 9 z" fill="#64748B"/>
+    </marker>
+    <marker id="arrowAmber" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+      <path d="M 0 1 L 10 5 L 0 9 z" fill="#F59E0B"/>
+    </marker>
+  </defs>
+
+  <rect width="1120" height="620" rx="20" fill="url(#bgGrad)"/>
+  <rect x="16" y="16" width="1088" height="588" rx="16" fill="none" stroke="#1E293B" stroke-width="1.5"/>
+
+  <!-- Header -->
+  <text x="560" y="54" text-anchor="middle" fill="#F8FAFC" font-family="-apple-system, BlinkMacSystemFont, Segoe UI, Helvetica, Arial, sans-serif" font-size="24" font-weight="700">
+    macOS Battery Guardian — Alert &amp; Auto-Dismiss State Machine
+  </text>
+  <text x="560" y="79" text-anchor="middle" fill="#94A3B8" font-family="-apple-system, BlinkMacSystemFont, Segoe UI, Helvetica, Arial, sans-serif" font-size="14">
+    60s launchd Loop + Instant IOKit.ps Plug/Unplug Listener · 100% Silent · Zero Cloud / Zero Network Sockets
+  </text>
+
+  <!-- Battery SoC Gauge Bar -->
+  <text x="70" y="114" fill="#CBD5E1" font-family="-apple-system, BlinkMacSystemFont, Segoe UI, Helvetica, Arial, sans-serif" font-size="12" font-weight="700">BATTERY STATE OF CHARGE ZONES</text>
+  <rect x="70" y="124" width="147" height="24" rx="5" fill="#991B1B" stroke="#EF4444" stroke-width="1.2"/>
+  <rect x="221" y="124" width="147" height="24" rx="5" fill="#7C2D12" stroke="#F97316" stroke-width="1.2"/>
+  <rect x="372" y="124" width="388" height="24" rx="5" fill="#134E4A" stroke="#14B8A6" stroke-width="1.2"/>
+  <rect x="764" y="124" width="286" height="24" rx="5" fill="#064E3B" stroke="#10B981" stroke-width="1.2"/>
+
+  <text x="143" y="140" text-anchor="middle" fill="#FEE2E2" font-family="SF Mono, Menlo, Consolas, monospace" font-size="12" font-weight="700">0% – 14% CRITICAL</text>
+  <text x="294" y="140" text-anchor="middle" fill="#FFEDD5" font-family="SF Mono, Menlo, Consolas, monospace" font-size="12" font-weight="700">15% – 29% LOW</text>
+  <text x="566" y="140" text-anchor="middle" fill="#CCFBF1" font-family="SF Mono, Menlo, Consolas, monospace" font-size="12" font-weight="700">30% – 70% OPTIMAL BATTERY HEALTH WINDOW</text>
+  <text x="907" y="140" text-anchor="middle" fill="#D1FAE5" font-family="SF Mono, Menlo, Consolas, monospace" font-size="12" font-weight="700">71% – 100% HIGH</text>
+
+  <!-- Connector lines from gauge down to cards -->
+  <line x1="143" y1="148" x2="143" y2="188" stroke="#64748B" stroke-width="1.8" marker-end="url(#arrowCyan)"/>
+  <line x1="294" y1="148" x2="365" y2="188" stroke="#64748B" stroke-width="1.8" marker-end="url(#arrowCyan)"/>
+  <line x1="566" y1="148" x2="585" y2="188" stroke="#64748B" stroke-width="1.8" marker-end="url(#arrowCyan)"/>
+  <line x1="907" y1="148" x2="965" y2="188" stroke="#64748B" stroke-width="1.8" marker-end="url(#arrowCyan)"/>
+
+  <!-- Card 1: Critical (<15% Unplugged >= 10m) -->
+  <rect x="44" y="194" width="198" height="292" rx="14" fill="#2A0B10" stroke="#EF4444" stroke-width="2"/>
+  <rect x="58" y="208" width="170" height="24" rx="6" fill="#7F1D1D"/>
+  <text x="143" y="224" text-anchor="middle" fill="#FCA5A5" font-family="SF Mono, Menlo, Consolas, monospace" font-size="11" font-weight="700">MODE: CRITICAL</text>
+  <text x="143" y="256" text-anchor="middle" fill="#FFFFFF" font-family="-apple-system, BlinkMacSystemFont, Segoe UI, Helvetica, Arial, sans-serif" font-size="16" font-weight="700">&lt; 15% Unplugged</text>
+  <text x="143" y="276" text-anchor="middle" fill="#FCA5A5" font-family="-apple-system, BlinkMacSystemFont, Segoe UI, Helvetica, Arial, sans-serif" font-size="12">(Sustained &gt;= 10 min)</text>
+  <line x1="60" y1="292" x2="226" y2="292" stroke="#7F1D1D" stroke-width="1"/>
+  <text x="60" y="314" fill="#E2E8F0" font-family="-apple-system, BlinkMacSystemFont, Segoe UI, Helvetica, Arial, sans-serif" font-size="12">• Full-screen red alert</text>
+  <text x="60" y="336" fill="#E2E8F0" font-family="-apple-system, BlinkMacSystemFont, Segoe UI, Helvetica, Arial, sans-serif" font-size="12">• Sends emergency email:</text>
+  <text x="68" y="356" fill="#FDE68A" font-family="SF Mono, Menlo, Consolas, monospace" font-size="11">Mail / SMTP / SSH</text>
+  <text x="60" y="382" fill="#E2E8F0" font-family="-apple-system, BlinkMacSystemFont, Segoe UI, Helvetica, Arial, sans-serif" font-size="12">• Repeats every 30 min</text>
+  <text x="60" y="404" fill="#CBD5E1" font-family="-apple-system, BlinkMacSystemFont, Segoe UI, Helvetica, Arial, sans-serif" font-size="11.5">Auto-dismiss:</text>
+  <text x="68" y="422" fill="#86EFAC" font-family="-apple-system, BlinkMacSystemFont, Segoe UI, Helvetica, Arial, sans-serif" font-size="11.5">When AC plugged or</text>
+  <text x="68" y="438" fill="#86EFAC" font-family="-apple-system, BlinkMacSystemFont, Segoe UI, Helvetica, Arial, sans-serif" font-size="11.5">Esc / Enter / Space</text>
+  <rect x="58" y="452" width="170" height="22" rx="5" fill="#450A0A"/>
+  <text x="143" y="467" text-anchor="middle" fill="#FECACA" font-family="SF Mono, Menlo, Consolas, monospace" font-size="10.5">Email stays ON in Mute</text>
+
+  <!-- Card 2: Low (<30% Unplugged) -->
+  <rect x="260" y="194" width="198" height="292" rx="14" fill="#27120B" stroke="#F97316" stroke-width="2"/>
+  <rect x="274" y="208" width="170" height="24" rx="6" fill="#7C2D12"/>
+  <text x="359" y="224" text-anchor="middle" fill="#FDBA74" font-family="SF Mono, Menlo, Consolas, monospace" font-size="11" font-weight="700">MODE: LOW</text>
+  <text x="359" y="256" text-anchor="middle" fill="#FFFFFF" font-family="-apple-system, BlinkMacSystemFont, Segoe UI, Helvetica, Arial, sans-serif" font-size="16" font-weight="700">&lt; 30% on Battery</text>
+  <text x="359" y="276" text-anchor="middle" fill="#FDBA74" font-family="-apple-system, BlinkMacSystemFont, Segoe UI, Helvetica, Arial, sans-serif" font-size="12">(Unplugged)</text>
+  <line x1="276" y1="292" x2="442" y2="292" stroke="#7C2D12" stroke-width="1"/>
+  <text x="276" y="314" fill="#E2E8F0" font-family="-apple-system, BlinkMacSystemFont, Segoe UI, Helvetica, Arial, sans-serif" font-size="12">• Silent coral fullscreen</text>
+  <text x="276" y="336" fill="#E2E8F0" font-family="-apple-system, BlinkMacSystemFont, Segoe UI, Helvetica, Arial, sans-serif" font-size="12">• Reminds to plug in AC</text>
+  <text x="276" y="358" fill="#E2E8F0" font-family="-apple-system, BlinkMacSystemFont, Segoe UI, Helvetica, Arial, sans-serif" font-size="12">• Live 2x3 IOKit metrics</text>
+  <text x="276" y="382" fill="#E2E8F0" font-family="-apple-system, BlinkMacSystemFont, Segoe UI, Helvetica, Arial, sans-serif" font-size="12">• Cooldown: 5 min</text>
+  <text x="276" y="404" fill="#CBD5E1" font-family="-apple-system, BlinkMacSystemFont, Segoe UI, Helvetica, Arial, sans-serif" font-size="11.5">Auto-dismiss:</text>
+  <text x="284" y="422" fill="#86EFAC" font-family="-apple-system, BlinkMacSystemFont, Segoe UI, Helvetica, Arial, sans-serif" font-size="11.5">Instant on AC plug-in</text>
+  <text x="284" y="438" fill="#FDE68A" font-family="-apple-system, BlinkMacSystemFont, Segoe UI, Helvetica, Arial, sans-serif" font-size="11.5">(&lt;30% AC switches right)</text>
+  <rect x="274" y="452" width="170" height="22" rx="5" fill="#431407"/>
+  <text x="359" y="467" text-anchor="middle" fill="#FED7AA" font-family="SF Mono, Menlo, Consolas, monospace" font-size="10.5">test: ./manage.sh test-low</text>
+
+  <!-- Arrow Low -> Upgrade Charger when AC plugged below 30% -->
+  <line x1="458" y1="320" x2="474" y2="320" stroke="#F59E0B" stroke-width="2" marker-end="url(#arrowAmber)"/>
+
+  <!-- Card 3: Low on AC (<30% on AC -> Higher-Wattage Charger) NEW -->
+  <rect x="478" y="194" width="214" height="292" rx="14" fill="#261704" stroke="#F59E0B" stroke-width="2.4"/>
+  <rect x="492" y="208" width="186" height="24" rx="6" fill="#78350F"/>
+  <text x="585" y="224" text-anchor="middle" fill="#FDE68A" font-family="SF Mono, Menlo, Consolas, monospace" font-size="10.5" font-weight="700">NEW: UPGRADE CHARGER</text>
+  <text x="585" y="256" text-anchor="middle" fill="#FFFFFF" font-family="-apple-system, BlinkMacSystemFont, Segoe UI, Helvetica, Arial, sans-serif" font-size="16" font-weight="700">&lt; 30% Even on AC</text>
+  <text x="585" y="276" text-anchor="middle" fill="#FCD34D" font-family="-apple-system, BlinkMacSystemFont, Segoe UI, Helvetica, Arial, sans-serif" font-size="12">(Low SoC While Plugged In)</text>
+  <line x1="494" y1="292" x2="676" y2="292" stroke="#78350F" stroke-width="1"/>
+  <text x="494" y="314" fill="#E2E8F0" font-family="-apple-system, BlinkMacSystemFont, Segoe UI, Helvetica, Arial, sans-serif" font-size="12">• Silent amber fullscreen</text>
+  <text x="494" y="336" fill="#E2E8F0" font-family="-apple-system, BlinkMacSystemFont, Segoe UI, Helvetica, Arial, sans-serif" font-size="12">• Prompts larger USB-C PD</text>
+  <text x="494" y="358" fill="#FDE68A" font-family="-apple-system, BlinkMacSystemFont, Segoe UI, Helvetica, Arial, sans-serif" font-size="11.5">• Shows Adapter W, Net W</text>
+  <text x="502" y="376" fill="#FDE68A" font-family="-apple-system, BlinkMacSystemFont, Segoe UI, Helvetica, Arial, sans-serif" font-size="11.5">&amp; flags net drain (&lt;= 0 W)</text>
+  <text x="494" y="400" fill="#CBD5E1" font-family="-apple-system, BlinkMacSystemFont, Segoe UI, Helvetica, Arial, sans-serif" font-size="11.5">Auto-dismiss:</text>
+  <text x="502" y="418" fill="#86EFAC" font-family="-apple-system, BlinkMacSystemFont, Segoe UI, Helvetica, Arial, sans-serif" font-size="11.5">When SoC reaches &gt;= 30%</text>
+  <text x="502" y="434" fill="#86EFAC" font-family="-apple-system, BlinkMacSystemFont, Segoe UI, Helvetica, Arial, sans-serif" font-size="11.5">or on unplug / Esc key</text>
+  <rect x="492" y="452" width="186" height="22" rx="5" fill="#451A03"/>
+  <text x="585" y="467" text-anchor="middle" fill="#FDE68A" font-family="SF Mono, Menlo, Consolas, monospace" font-size="10.5">./manage.sh test-upgrade</text>
+
+  <!-- Card 4: Optimal Zone + On-Demand HUD -->
+  <rect x="710" y="194" width="166" height="292" rx="14" fill="#0B2229" stroke="#06B6D4" stroke-width="2"/>
+  <rect x="722" y="208" width="142" height="24" rx="6" fill="#164E63"/>
+  <text x="793" y="224" text-anchor="middle" fill="#67E8F9" font-family="SF Mono, Menlo, Consolas, monospace" font-size="10.5" font-weight="700">OPTIMAL + HUD</text>
+  <text x="793" y="256" text-anchor="middle" fill="#FFFFFF" font-family="-apple-system, BlinkMacSystemFont, Segoe UI, Helvetica, Arial, sans-serif" font-size="16" font-weight="700">30% – 70%</text>
+  <text x="793" y="276" text-anchor="middle" fill="#67E8F9" font-family="-apple-system, BlinkMacSystemFont, Segoe UI, Helvetica, Arial, sans-serif" font-size="12">(Quiet Monitoring)</text>
+  <line x1="724" y1="292" x2="862" y2="292" stroke="#164E63" stroke-width="1"/>
+  <text x="724" y="314" fill="#E2E8F0" font-family="-apple-system, BlinkMacSystemFont, Segoe UI, Helvetica, Arial, sans-serif" font-size="12">• No intrusive alerts</text>
+  <text x="724" y="336" fill="#E2E8F0" font-family="-apple-system, BlinkMacSystemFont, Segoe UI, Helvetica, Arial, sans-serif" font-size="12">• Records 180-pt rate</text>
+  <text x="732" y="354" fill="#94A3B8" font-family="-apple-system, BlinkMacSystemFont, Segoe UI, Helvetica, Arial, sans-serif" font-size="11.5">buffer (15m/60m %/h)</text>
+  <text x="724" y="380" fill="#E2E8F0" font-family="-apple-system, BlinkMacSystemFont, Segoe UI, Helvetica, Arial, sans-serif" font-size="12">• On-demand HUD:</text>
+  <text x="732" y="398" fill="#67E8F9" font-family="SF Mono, Menlo, Consolas, monospace" font-size="11">./manage.sh hud</text>
+  <text x="732" y="416" fill="#67E8F9" font-family="SF Mono, Menlo, Consolas, monospace" font-size="11">./manage.sh health</text>
+  <rect x="722" y="452" width="142" height="22" rx="5" fill="#083344"/>
+  <text x="793" y="467" text-anchor="middle" fill="#A5F3FC" font-family="SF Mono, Menlo, Consolas, monospace" font-size="10.5">Live 2s IOKit Refresh</text>
+
+  <!-- Card 5: High (>70% on AC) -->
+  <rect x="894" y="194" width="182" height="292" rx="14" fill="#082419" stroke="#10B981" stroke-width="2"/>
+  <rect x="906" y="208" width="158" height="24" rx="6" fill="#065F46"/>
+  <text x="985" y="224" text-anchor="middle" fill="#6EE7B7" font-family="SF Mono, Menlo, Consolas, monospace" font-size="11" font-weight="700">MODE: HIGH</text>
+  <text x="985" y="256" text-anchor="middle" fill="#FFFFFF" font-family="-apple-system, BlinkMacSystemFont, Segoe UI, Helvetica, Arial, sans-serif" font-size="16" font-weight="700">&gt; 70% on AC</text>
+  <text x="985" y="276" text-anchor="middle" fill="#6EE7B7" font-family="-apple-system, BlinkMacSystemFont, Segoe UI, Helvetica, Arial, sans-serif" font-size="12">(Prevent Wear)</text>
+  <line x1="908" y1="292" x2="1062" y2="292" stroke="#065F46" stroke-width="1"/>
+  <text x="908" y="314" fill="#E2E8F0" font-family="-apple-system, BlinkMacSystemFont, Segoe UI, Helvetica, Arial, sans-serif" font-size="12">• Silent emerald screen</text>
+  <text x="908" y="336" fill="#E2E8F0" font-family="-apple-system, BlinkMacSystemFont, Segoe UI, Helvetica, Arial, sans-serif" font-size="12">• Reminds to unplug AC</text>
+  <text x="908" y="358" fill="#E2E8F0" font-family="-apple-system, BlinkMacSystemFont, Segoe UI, Helvetica, Arial, sans-serif" font-size="12">• Live 2x3 IOKit metrics</text>
+  <text x="908" y="382" fill="#E2E8F0" font-family="-apple-system, BlinkMacSystemFont, Segoe UI, Helvetica, Arial, sans-serif" font-size="12">• Cooldown: 15 min</text>
+  <text x="908" y="404" fill="#CBD5E1" font-family="-apple-system, BlinkMacSystemFont, Segoe UI, Helvetica, Arial, sans-serif" font-size="11.5">Auto-dismiss:</text>
+  <text x="916" y="422" fill="#86EFAC" font-family="-apple-system, BlinkMacSystemFont, Segoe UI, Helvetica, Arial, sans-serif" font-size="11.5">Instant on AC unplug</text>
+  <text x="916" y="438" fill="#86EFAC" font-family="-apple-system, BlinkMacSystemFont, Segoe UI, Helvetica, Arial, sans-serif" font-size="11.5">or Esc / Enter / Space</text>
+  <rect x="906" y="452" width="158" height="22" rx="5" fill="#022C22"/>
+  <text x="985" y="467" text-anchor="middle" fill="#A7F3D0" font-family="SF Mono, Menlo, Consolas, monospace" font-size="10.5">./manage.sh test-high</text>
+
+  <!-- Meeting / Quiet Mode Banner -->
+  <rect x="44" y="508" width="1032" height="74" rx="12" fill="#172033" stroke="#334155" stroke-width="1.5"/>
+  <text x="64" y="535" fill="#F8FAFC" font-family="-apple-system, BlinkMacSystemFont, Segoe UI, Helvetica, Arial, sans-serif" font-size="14" font-weight="700">
+    Meeting / Quiet Mode (2h / 4h Quick Pause or Weekly Schedules in config.json)
+  </text>
+  <text x="64" y="560" fill="#94A3B8" font-family="-apple-system, BlinkMacSystemFont, Segoe UI, Helvetica, Arial, sans-serif" font-size="12.5">
+    Suppresses all full-screen popups (&gt;70%, &lt;30%, &lt;30% AC upgrade, &lt;15%) during presentations or classes, while keeping &lt;15% emergency email alerts active.
+  </text>
+</svg>

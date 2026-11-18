@@ -112,6 +112,10 @@ def load_config() -> dict:
         "low_threshold_percent": 30,
         "low_only_on_battery": True,
         "low_snooze_minutes": 5,
+        "low_on_ac_upgrade_charger": True,
+        "low_on_ac_snooze_minutes": 5,
+        "low_on_ac_min_battery_watts": None,
+        "low_on_ac_min_adapter_watts": None,
         "critical_threshold_percent": 15,
         "critical_unchanged_minutes": 10,
         "critical_email_repeat_minutes": 30,
@@ -154,6 +158,7 @@ def load_state() -> dict:
     default_state = {
         "last_high_alert_ts": 0.0,
         "last_low_alert_ts": 0.0,
+        "last_upgrade_alert_ts": 0.0,
         "below_15_since_ts": None,
         "below_15_start_percent": None,
         "last_critical_email_ts": 0.0,
@@ -722,9 +727,11 @@ def trigger_fullscreen_alert(
     message: str = "",
     device_name: str = "MacBook",
     dismiss_policy: str = "auto",
+    recovery_percent: Optional[int] = None,
 ) -> None:
     """Launch the native Swift silent full-screen alert or HUD via macOS LaunchServices (open -a)."""
     safe_device = sanitize_header_token(device_name) or "MacBook"
+    recovery_arg = str(recovery_percent) if recovery_percent is not None else ""
     log(
         f"Triggering silent fullscreen alert: device={safe_device}, mode={mode}, "
         f"percent={percent}%, policy={dismiss_policy}, msg={message}"
@@ -745,6 +752,7 @@ def trigger_fullscreen_alert(
             safe_device,
             str(STATE_PATH),
             dismiss_policy,
+            recovery_arg,
         ]
         res = subprocess.run(cmd, capture_output=True, text=True)
         if res.returncode == 0:
@@ -753,7 +761,7 @@ def trigger_fullscreen_alert(
 
     if ALERT_BIN.exists():
         subprocess.Popen(
-            [str(ALERT_BIN), mode, str(percent), message, safe_device, str(STATE_PATH), dismiss_policy]
+            [str(ALERT_BIN), mode, str(percent), message, safe_device, str(STATE_PATH), dismiss_policy, recovery_arg]
         )
         return
 
@@ -940,6 +948,64 @@ def send_emergency_email(cfg: dict, batt: dict, duration_min: float, is_test: bo
     return False
 
 
+def should_prompt_charger_upgrade(
+    cfg: dict,
+    pct: int,
+    on_ac: bool,
+    telemetry: Optional[Dict[str, Any]],
+) -> bool:
+    """Return True when battery is below low_threshold_percent while connected to AC."""
+    if not bool(cfg.get("low_on_ac_upgrade_charger", True)):
+        return False
+    low_th = int(cfg.get("low_threshold_percent", 30))
+    if not (pct < low_th and on_ac):
+        return False
+
+    min_batt_w = cfg.get("low_on_ac_min_battery_watts")
+    if min_batt_w is not None and telemetry and telemetry.get("battery_power_w") is not None:
+        if float(telemetry["battery_power_w"]) >= float(min_batt_w):
+            return False
+
+    min_adapter_w = cfg.get("low_on_ac_min_adapter_watts")
+    if min_adapter_w is not None and telemetry and telemetry.get("adapter_watts") is not None:
+        if float(telemetry["adapter_watts"]) >= float(min_adapter_w):
+            return False
+
+    return True
+
+
+def format_upgrade_charger_message(
+    device_name: str,
+    pct: int,
+    low_th: int,
+    crit_th: int,
+    telemetry: Optional[Dict[str, Any]],
+) -> str:
+    """Build a telemetry-rich prompt recommending a higher-wattage charger below low_threshold_percent."""
+    prefix = ""
+    if pct < crit_th:
+        prefix = f"CRITICAL (< {crit_th}%) on AC! "
+    if telemetry and telemetry.get("battery_power_w") is not None and float(telemetry["battery_power_w"]) <= 0.0:
+        prefix += "Net battery drain detected even with AC connected! "
+
+    details: List[str] = []
+    if telemetry:
+        adp_w = telemetry.get("adapter_watts")
+        if adp_w is not None and adp_w > 0:
+            details.append(f"Adapter {adp_w} W")
+        bpw = telemetry.get("battery_power_w")
+        if bpw is not None:
+            details.append(f"Net Battery {bpw:+.1f} W")
+        rate = telemetry.get("inst_rate_pct_h")
+        if rate is not None:
+            details.append(f"{rate:+.1f}%/h")
+    tel_str = f" ({', '.join(details)})" if details else ""
+    return (
+        f"[{device_name}] {prefix}Battery is at {pct}% (< {low_th}%) while connected to AC{tel_str}. "
+        f"Switch to a higher-wattage charger to charge faster above {low_th}%."
+    )
+
+
 def run_check() -> None:
     cfg = load_config()
     state = load_state()
@@ -963,6 +1029,7 @@ def run_check() -> None:
 
     high_snooze_sec = float(cfg.get("high_snooze_minutes", 15)) * 60.0
     low_snooze_sec = float(cfg.get("low_snooze_minutes", 5)) * 60.0
+    upgrade_snooze_sec = float(cfg.get("low_on_ac_snooze_minutes", 5)) * 60.0
     crit_unchanged_sec = float(cfg.get("critical_unchanged_minutes", 10)) * 60.0
     crit_email_repeat_sec = float(cfg.get("critical_email_repeat_minutes", 30)) * 60.0
 
@@ -1044,6 +1111,28 @@ def run_check() -> None:
             dismiss_active_alert()
             state["active_alert_mode"] = None
 
+    # --- 4. Check Low Battery on AC (< low_threshold_percent while plugged in -> Higher-Wattage Charger Prompt) ---
+    upgrade_cond = (not low_cond) and should_prompt_charger_upgrade(cfg, pct, on_ac, telemetry)
+    if upgrade_cond:
+        if not quiet["paused"] and (now - state.get("last_upgrade_alert_ts", 0.0) >= upgrade_snooze_sec):
+            upgrade_msg = format_upgrade_charger_message(device_name, pct, low_th, crit_th, telemetry)
+            trigger_fullscreen_alert(
+                "upgrade_charger",
+                pct,
+                upgrade_msg,
+                device_name,
+                dismiss_policy="auto",
+                recovery_percent=low_th,
+            )
+            state["last_upgrade_alert_ts"] = now
+            state["active_alert_mode"] = "upgrade_charger"
+    else:
+        state["last_upgrade_alert_ts"] = 0.0
+        if state.get("active_alert_mode") == "upgrade_charger":
+            log(f"[{device_name}] Low-on-AC charger upgrade condition cleared (pct={pct}%, on_ac={on_ac}); closing active alert.")
+            dismiss_active_alert()
+            state["active_alert_mode"] = None
+
     state["last_percent"] = pct
     state["last_on_ac"] = on_ac
     save_state(state)
@@ -1102,6 +1191,10 @@ def show_status() -> None:
     print(
         f"  Low Battery     : < {cfg['low_threshold_percent']}% "
         f"(only_on_battery={cfg['low_only_on_battery']}, cooldown={cfg['low_snooze_minutes']} min, silent fullscreen)"
+    )
+    print(
+        f"  Low on AC       : < {cfg['low_threshold_percent']}% on AC -> Higher-Wattage Charger Alert "
+        f"(enabled={cfg.get('low_on_ac_upgrade_charger', True)}, cooldown={cfg.get('low_on_ac_snooze_minutes', 5)} min)"
     )
     print(
         f"  Critical Email  : < {cfg['critical_threshold_percent']}% unplugged for "
@@ -1205,6 +1298,7 @@ def main() -> None:
     parser.add_argument("--unmute", action="store_true", help="Resume normal silent fullscreen alerts")
     parser.add_argument("--test-high", action="store_true", help="Preview >70%% silent fullscreen alert")
     parser.add_argument("--test-low", action="store_true", help="Preview <30%% silent fullscreen alert")
+    parser.add_argument("--test-upgrade", action="store_true", help="Preview <30%% on-AC higher-wattage charger fullscreen alert")
     parser.add_argument("--test-critical", action="store_true", help="Preview <15%% critical silent fullscreen alert")
     parser.add_argument("--test-email", action="store_true", help="Send a test emergency email")
     args = parser.parse_args()
@@ -1258,6 +1352,17 @@ def main() -> None:
             f"[Test Preview - {device_name}] Battery is below {low_th}%. Plug in your charger (or press Esc) to auto-close.",
             device_name,
             dismiss_policy="change",
+        )
+    elif args.test_upgrade:
+        telemetry = read_smart_battery_telemetry()
+        preview_pct = max(low_th - 6, 24)
+        trigger_fullscreen_alert(
+            "upgrade_charger",
+            preview_pct,
+            f"[Test Preview] {format_upgrade_charger_message(device_name, preview_pct, low_th, crit_th, telemetry)}",
+            device_name,
+            dismiss_policy="change",
+            recovery_percent=low_th,
         )
     elif args.test_critical:
         to_addr = sanitize_header_token(cfg.get("email", {}).get("to_email", "you@example.com"))

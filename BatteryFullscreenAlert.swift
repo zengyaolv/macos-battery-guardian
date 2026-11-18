@@ -3,12 +3,13 @@ import IOKit
 import IOKit.ps
 
 // Arguments:
-// 1: mode ("high" | "low" | "critical" | "inspect")
+// 1: mode ("high" | "low" | "critical" | "upgrade_charger" | "inspect")
 // 2: percentage (e.g. "75")
 // 3: detail message (optional)
 // 4: device name (optional, default "MacBook")
 // 5: state.json path (optional, for writing pause_until_ts when clicking Pause 2h)
 // 6: dismissPolicy ("auto" | "change" | "manual", default "auto")
+// 7: recoveryThreshold (optional integer %, e.g. "30" for upgrade_charger auto-dismiss)
 
 struct BatteryHUDTelemetry {
     var osPercent: Int?
@@ -432,6 +433,7 @@ class AlertOverlayApp: NSObject, NSApplicationDelegate {
     let deviceName: String
     let statePath: String
     let dismissPolicy: String
+    let recoveryThreshold: Int?
     let initialOnAC: Bool
     var powerWatcher: PowerWatcher?
     var telemetryTimer: Timer?
@@ -442,7 +444,8 @@ class AlertOverlayApp: NSObject, NSApplicationDelegate {
         customMessage: String,
         deviceName: String,
         statePath: String,
-        dismissPolicy: String
+        dismissPolicy: String,
+        recoveryThreshold: Int? = nil
     ) {
         self.mode = mode
         self.percent = percent
@@ -450,7 +453,8 @@ class AlertOverlayApp: NSObject, NSApplicationDelegate {
         self.deviceName = deviceName
         self.statePath = statePath
         self.dismissPolicy = dismissPolicy
-        self.initialOnAC = PowerWatcher.isDrawingFromACPower()
+        self.recoveryThreshold = recoveryThreshold
+        self.initialOnAC = SmartBatteryReader.readTelemetry()?.externalConnected ?? PowerWatcher.isDrawingFromACPower()
         super.init()
     }
 
@@ -480,22 +484,27 @@ class AlertOverlayApp: NSObject, NSApplicationDelegate {
 
     func startTelemetryTimer() {
         telemetryTimer = Timer.scheduledTimer(withTimeInterval: 2.0, repeats: true) { [weak self] _ in
+            self?.checkPowerAndDismissIfNeeded()
             self?.refreshTelemetryUI()
         }
     }
 
     func checkPowerAndDismissIfNeeded() {
+        let tel = SmartBatteryReader.readTelemetry()
+        let nowOnAC = tel?.externalConnected ?? PowerWatcher.isDrawingFromACPower()
         if dismissPolicy == "manual" || mode == "inspect" {
             refreshTelemetryUI()
             return
         }
-        let nowOnAC = PowerWatcher.isDrawingFromACPower()
         let shouldDismiss: Bool
         if dismissPolicy == "change" {
             shouldDismiss = (nowOnAC != initialOnAC)
         } else {
             if mode == "high" {
                 shouldDismiss = !nowOnAC
+            } else if mode == "upgrade_charger" {
+                let recovered = (recoveryThreshold != nil && (tel?.osPercent ?? -1) >= recoveryThreshold!)
+                shouldDismiss = (!nowOnAC) || recovered
             } else {
                 // "low" or "critical"
                 shouldDismiss = nowOnAC
@@ -514,7 +523,9 @@ class AlertOverlayApp: NSObject, NSApplicationDelegate {
         let onAC = tel?.externalConnected ?? PowerWatcher.isDrawingFromACPower()
 
         for widgets in screenWidgets {
-            if mode == "inspect" {
+            if mode == "upgrade_charger" && dismissPolicy != "change" {
+                widgets.headlineLabel.stringValue = "\(deviceName) at \(livePct)% (On AC)"
+            } else if mode == "inspect" {
                 let healthStr = tel?.trueHealthPct.map { String(format: "%.1f%%", $0) } ?? "--"
                 widgets.headlineLabel.stringValue = "\(deviceName) · \(livePct)% · Health \(healthStr)"
 
@@ -658,6 +669,15 @@ class AlertOverlayApp: NSObject, NSApplicationDelegate {
             headlineText = "\(deviceName) at \(percent)%"
             subText = customMessage.isEmpty
                 ? "Battery is above 70% on AC power. Unplug your charger to auto-close this alert and preserve battery health."
+                : customMessage
+        } else if mode == "upgrade_charger" {
+            bgColor = NSColor(calibratedRed: 0.24, green: 0.13, blue: 0.02, alpha: 0.94)
+            accentColor = NSColor(calibratedRed: 1.0, green: 0.72, blue: 0.16, alpha: 1.0)
+            iconSymbol = "🔌"
+            badgeText = "[\(deviceName)] LOW BATTERY ON AC (< 30% · HIGHER-WATTAGE CHARGER RECOMMENDED)"
+            headlineText = "\(deviceName) at \(percent)% (On AC)"
+            subText = customMessage.isEmpty
+                ? "Battery is below 30% while connected to AC power. Switch to a higher-wattage charger to charge faster (unplug or reach >=30% to auto-close)."
                 : customMessage
         } else if mode == "critical" {
             bgColor = NSColor(calibratedRed: 0.28, green: 0.03, blue: 0.05, alpha: 0.95)
@@ -886,6 +906,7 @@ let customMsg = args.count > 3 ? args[3] : ""
 let deviceName = args.count > 4 ? args[4] : "MacBook"
 let statePath = args.count > 5 ? args[5] : ""
 let dismissPolicy = args.count > 6 ? args[6] : "auto"
+let recoveryThreshold = args.count > 7 ? Int(args[7]) : nil
 
 let app = NSApplication.shared
 let delegate = AlertOverlayApp(
@@ -894,7 +915,8 @@ let delegate = AlertOverlayApp(
     customMessage: customMsg,
     deviceName: deviceName,
     statePath: statePath,
-    dismissPolicy: dismissPolicy
+    dismissPolicy: dismissPolicy,
+    recoveryThreshold: recoveryThreshold
 )
 app.delegate = delegate
 app.run()

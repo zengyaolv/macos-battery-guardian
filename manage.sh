@@ -191,6 +191,10 @@ case "${1:-status}" in
         sync_to_runtime
         /usr/bin/python3 "${RUNTIME_DIR}/battery_monitor.py" --test-low
         ;;
+    test-upgrade)
+        sync_to_runtime
+        /usr/bin/python3 "${RUNTIME_DIR}/battery_monitor.py" --test-upgrade
+        ;;
     test-critical)
         sync_to_runtime
         /usr/bin/python3 "${RUNTIME_DIR}/battery_monitor.py" --test-critical
@@ -203,7 +207,7 @@ case "${1:-status}" in
         set_email "$2"
         ;;
     *)
-        echo "Usage: ./manage.sh {install|uninstall|status|health [--screen]|hud|pause [minutes]|unmute|set-email <email>|test-high|test-low|test-critical|test-email}"
+        echo "Usage: ./manage.sh {install|uninstall|status|health [--screen]|hud|pause [minutes]|unmute|set-email <email>|test-high|test-low|test-upgrade|test-critical|test-email}"
         exit 1
         ;;
 esac
